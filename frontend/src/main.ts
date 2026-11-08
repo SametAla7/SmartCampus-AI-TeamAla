@@ -1,12 +1,28 @@
 import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideRouter, Routes } from '@angular/router';
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
+import { authInterceptor } from './app/services/auth.interceptor';
 
-@Component({selector:'app-root',standalone:true,imports:[FormsModule,CommonModule],templateUrl:'./app.html'})
-export class AppComponent { mode:'login'|'signup'='login'; email=''; password=''; firstName=''; lastName=''; loading=false; message='';
-  submit(){this.loading=true;this.message='';setTimeout(()=>{this.loading=false;this.message=this.mode==='signup'?'Check your email to verify your account.':'Welcome back to SmartCampus AI.'},700)}
-  google(){this.message='Google sign-in will open here when OAuth credentials are configured.'}
-}
-bootstrapApplication(AppComponent);
+const routes: Routes = [
+  { path: 'login', loadComponent: () => import('./app/login.component').then(m => m.LoginComponent) },
+  { path: 'dashboard', loadComponent: () => import('./app/dashboard.component').then(m => m.DashboardComponent) },
+  { path: '', redirectTo: 'login', pathMatch: 'full' }
+];
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet],
+  template: '<router-outlet></router-outlet>'
+})
+export class AppComponent {}
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideRouter(routes)
+  ]
+});

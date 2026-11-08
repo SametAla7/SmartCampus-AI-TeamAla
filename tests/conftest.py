@@ -1,5 +1,10 @@
 """Fixtures de tests - base SQLite en memoire et client FastAPI."""
 
+import os
+
+# Allow isolated SQLite test DB even when app enforces hosted Postgres in normal mode.
+os.environ.setdefault("SMARTCAMPUS_ALLOW_NON_REMOTE_DB", "1")
+
 import uuid
 from typing import Iterator
 

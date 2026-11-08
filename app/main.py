@@ -1,5 +1,6 @@
 """Point d'entree de l'application SmartCampus AI."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -11,13 +12,39 @@ from app.api import admin, auth, candidatures, conversations, dashboard, documen
 from app.core.config import settings
 from app.core.errors import APIError
 from app.db.base import Base
-from app.db.session import engine
+from app.db.session import db_diagnostics, engine
+
+logger = logging.getLogger("smartcampus")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Alignement du schema sur les metadonnees ORM (complement aux migrations Alembic).
-    Base.metadata.create_all(bind=engine)
+    diag = db_diagnostics()
+    # Safe diagnostic only (no credentials/URL/password).
+    logger.info(
+        "DB startup: type=%s host=%s database=%s status=%s",
+        diag.get("type"), diag.get("host"), diag.get("database"), diag.get("status"),
+    )
+    print(
+        f"[SmartCampus DB] type={diag.get('type')} host={diag.get('host')} "
+        f"database={diag.get('database')} status={diag.get('status')}",
+        flush=True,
+    )
+    if str(diag.get("status", "")).startswith("error"):
+        raise RuntimeError(
+            "Echec de connexion a la base de donnees au demarrage "
+            f"(type={diag.get('type')} host={diag.get('host')} database={diag.get('database')}). "
+            "Verifiez DATABASE_URL/DATABASE_URL_DIRECT dans le .env du projet, reseau et SSL."
+        )
+    # Création des tables au démarrage si activée (dev). En production, préférer les migrations Alembic.
+    if settings.CREATE_TABLES_ON_STARTUP:
+        try:
+            Base.metadata.create_all(bind=engine)
+        except Exception as exc:
+            raise RuntimeError(
+                "Echec de l'initialisation du schema au demarrage. "
+                "Verifiez les droits/schema (sans exposer d'identifiants)."
+            ) from exc
     yield
     engine.dispose()
 

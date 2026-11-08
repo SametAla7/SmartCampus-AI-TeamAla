@@ -22,9 +22,16 @@ def create_user(db: Session, data: UserCreate) -> UserRead:
         role=data.role,
         est_actif=True,
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except IntegrityError:
+        db.rollback()
+        raise conflict("USER_EMAIL_ALREADY_EXISTS", "Un utilisateur existe deja avec cet email.")
+    except Exception:
+        db.rollback()
+        raise
     return UserRead.model_validate(user)
 
 
