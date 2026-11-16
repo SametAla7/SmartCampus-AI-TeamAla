@@ -160,6 +160,36 @@ class Settings(BaseSettings):
     RAG_VECTOR_STORE: Optional[str] = None
     RAG_EMBEDDING_PROVIDER: Optional[str] = None
 
+    # URL du frontend (liens dans les emails, redirection apres OAuth)
+    FRONTEND_URL: str = "http://localhost:4200"
+
+    # SMTP - envoi d'emails (inactif tant que SMTP_HOST / SMTP_FROM_EMAIL ne sont pas definis)
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_USE_STARTTLS: bool = True  # port 587
+    SMTP_USE_SSL: bool = False  # port 465 (implicite) - prioritaire sur STARTTLS
+    SMTP_FROM_EMAIL: Optional[str] = None
+    SMTP_FROM_NAME: str = "SmartCampus AI"
+    SMTP_TIMEOUT_SECONDS: int = 10
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool((self.SMTP_HOST or "").strip() and (self.SMTP_FROM_EMAIL or "").strip())
+
+    # OAuth 2.0 - Google (inactif tant que client id / secret ne sont pas definis)
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    # Doit correspondre EXACTEMENT a l'URI de redirection declaree dans la console Google Cloud
+    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8001/api/auth/oauth/google/callback"
+    OAUTH_STATE_EXPIRE_MINUTES: int = 10
+
+    @property
+    def google_oauth_configured(self) -> bool:
+        return bool((self.GOOGLE_CLIENT_ID or "").strip() and (self.GOOGLE_CLIENT_SECRET or "").strip())
+
     # Responsable academique attribue par defaut aux nouvelles candidatures
     DEFAULT_RESPONSABLE_ACADEMIQUE_ID: Optional[str] = None
 

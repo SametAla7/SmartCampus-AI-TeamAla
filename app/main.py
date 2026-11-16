@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.api import admin, auth, candidatures, conversations, dashboard, documents, entretiens, parcours, users
+from app.api import admin, auth, candidatures, conversations, dashboard, documents, entretiens, oauth, parcours, users
 from app.core.config import settings
 from app.core.errors import APIError
 from app.db.base import Base
@@ -67,6 +67,7 @@ app.add_middleware(
 
 
 app.include_router(auth.router, prefix=settings.API_PREFIX)
+app.include_router(oauth.router, prefix=settings.API_PREFIX)
 app.include_router(users.router, prefix=settings.API_PREFIX)
 app.include_router(parcours.router, prefix=settings.API_PREFIX)
 app.include_router(conversations.router, prefix=settings.API_PREFIX)

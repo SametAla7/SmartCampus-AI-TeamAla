@@ -1,6 +1,7 @@
 """Securite : hachage des mots de passe (Argon2) et JWT (access / refresh)."""
 
 import datetime
+import hashlib
 import uuid
 
 from argon2 import PasswordHasher
@@ -76,3 +77,53 @@ def decode_token(token: str, expected_type: str = "access") -> dict:
         raise unauthenticated("TOKEN_INVALID", "Token invalide.")
 
     return payload
+
+
+def _password_fingerprint(hashed_password: str) -> str:
+    """Empreinte courte du hash courant : un token de reinitialisation devient
+    invalide des que le mot de passe change (usage unique, sans colonne en base)."""
+    return hashlib.sha256(hashed_password.encode("utf-8")).hexdigest()[:16]
+
+
+def create_password_reset_token(user_id: uuid.UUID, hashed_password: str) -> str:
+    now = _now()
+    exp_time = now + datetime.timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
+    payload = {
+        "sub": str(user_id),
+        "type": "password_reset",
+        "pwd": _password_fingerprint(hashed_password),
+        "iat": int(now.timestamp()),
+        "exp": int(exp_time.timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_password_reset_token(token: str) -> dict:
+    try:
+        return decode_token(token, expected_type="password_reset")
+    except APIError:
+        raise unauthenticated("RESET_TOKEN_INVALID", "Lien de reinitialisation invalide ou expire.")
+
+
+def reset_token_matches_password(payload: dict, hashed_password: str) -> bool:
+    return payload.get("pwd") == _password_fingerprint(hashed_password)
+
+
+def create_oauth_state(nonce: str) -> str:
+    now = _now()
+    exp_time = now + datetime.timedelta(minutes=settings.OAUTH_STATE_EXPIRE_MINUTES)
+    payload = {
+        "sub": "oauth",
+        "type": "oauth_state",
+        "nonce": nonce,
+        "iat": int(now.timestamp()),
+        "exp": int(exp_time.timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_oauth_state(state: str) -> dict:
+    try:
+        return decode_token(state, expected_type="oauth_state")
+    except APIError:
+        raise unauthenticated("OAUTH_STATE_INVALID", "Parametre state OAuth invalide ou expire.")
