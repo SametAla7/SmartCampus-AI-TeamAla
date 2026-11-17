@@ -8,11 +8,12 @@ import { AuthService } from './services/auth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div style="padding: 40px; font-family: DM Sans, Arial;">
-      <h1>SmartCampus AI - Dashboard</h1>
+    <div style="padding: 40px; font-family: DM Sans, Arial; color: #14233f;">
+      <h1 style="color: #1742b5;">SmartCampus AI - Dashboard</h1>
       <p *ngIf="user">Bienvenue {{user.nom}} ({{user.role}})</p>
-      <button (click)="logout()">Déconnexion</button>
-      <p>Backend API : http://127.0.0.1:8001/api</p>
+      <button style="background:linear-gradient(90deg,#2869ee,#1742b5);color:#fff;border:0;border-radius:6px;padding:10px 14px;margin-right:8px;cursor:pointer" (click)="logout()">Déconnexion</button>
+      <button style="background:#fff;color:#1742b5;border:1px solid #74bce5;border-radius:6px;padding:10px 14px;cursor:pointer" (click)="openConversations()">Mon conseiller</button>
+      <p>Backend API : http://127.0.0.1:8000/api</p>
     </div>
   `
 })
@@ -24,5 +25,9 @@ export class DashboardComponent {
   logout() {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  openConversations() {
+    this.router.navigate(['/conversations']);
   }
 }

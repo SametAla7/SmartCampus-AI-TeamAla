@@ -1,0 +1,60 @@
+<main class="interview-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <span class="role-badge">Responsable entretien</span>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <strong>Responsable entretien</strong><small>IIT / ISB</small>
+      <nav><button class="active">▣ <span>Entretiens à venir</span></button><button>▤ <span>Dossiers prêts</span></button><button>☷ <span>Résultats saisis</span></button><button>✉ <span>Invitations</span></button></nav>
+      <div class="profile">{{ userName }}<small>Responsable entretien</small></div>
+    </aside>
+
+    <section class="workspace">
+      <div *ngIf="loading" class="state">Chargement des entretiens...</div>
+      <div *ngIf="error" class="error">{{ error }}</div>
+      <ng-container *ngIf="!loading && !error">
+        <div class="heading" *ngIf="candidature; else emptyHeading">
+          <div><h1>Entretien · Candidat {{ candidature.candidat_id.slice(0, 8) }}</h1><p>{{ candidature.parcours.nom }} ({{ candidature.parcours.etablissement }}) · {{ selected?.date | date:'d MMMM yyyy, HH:mm' }}</p></div>
+          <strong class="ready">{{ selected?.approuve ? 'Entretien approuvé' : 'Dossier prêt' }}</strong>
+        </div>
+        <ng-template #emptyHeading><div class="heading"><div><h1>Mes entretiens</h1><p>Consultez les dossiers et préparez les rendez-vous.</p></div></div></ng-template>
+
+        <div class="board" *ngIf="selected && candidature; else noInterviews">
+          <section class="candidate-card">
+            <h2>✦ Synthèse du parcours</h2>
+            <p>Le candidat est inscrit au parcours <strong>{{ candidature.parcours.nom }}</strong> de l’établissement {{ candidature.parcours.etablissement }}.</p>
+            <div class="facts"><span>Statut<strong>{{ candidature.statut }}</strong></span><span>Date du rendez-vous<strong>{{ selected.date | date:'d MMM yyyy, HH:mm' }}</strong></span><span>QCM<strong>{{ qcm?.score ?? '—' }} / 100</strong></span></div>
+            <h3>Demandes de complément</h3>
+            <div *ngFor="let request of complements" class="request"><strong>{{ request.statut }}</strong><span>{{ request.contenu }}</span></div>
+            <p *ngIf="!complements.length" class="muted">Aucune demande de complément.</p>
+          </section>
+          <section class="qcm-card">
+            <h2>Résultat du QCM</h2>
+            <strong class="score">{{ qcm?.score ?? '—' }}<small>/100</small></strong>
+            <p *ngIf="detailsLoading">Chargement...</p><p *ngIf="!detailsLoading && !qcm">QCM non réalisé.</p>
+            <p *ngIf="qcm">Résultat enregistré le {{ qcm.date | date:'d MMMM yyyy' }}.</p>
+          </section>
+          <aside class="result-card">
+            <h2>Suivi de l’entretien</h2>
+            <p>Rendez-vous : <strong>{{ selected.date | date:'EEEE d MMMM à HH:mm' }}</strong></p>
+            <button class="primary" (click)="approve()" [disabled]="saving || selected.approuve">{{ selected.approuve ? 'Entretien approuvé' : 'Transmettre à l’étape suivante' }}</button>
+            <label>Demander un complément<textarea [(ngModel)]="complement" rows="3" placeholder="Informations ou document manquant"></textarea></label>
+            <button class="secondary" (click)="requestComplement()" [disabled]="saving || !complement.trim()">Envoyer la demande</button>
+            <div *ngIf="actionError" class="error">{{ actionError }}</div>
+          </aside>
+        </div>
+
+        <section class="schedule-card" *ngIf="candidature">
+          <h2>Planifier un entretien pour cette candidature</h2>
+          <div><input type="datetime-local" [(ngModel)]="newDate"><button class="primary" (click)="schedule()" [disabled]="saving || !newDate">Planifier</button></div>
+        </section>
+
+        <ng-template #noInterviews><section class="empty">Aucun entretien ne vous est actuellement attribué.</section></ng-template>
+        <div class="interview-list" *ngIf="entretiens.length > 1"><h2>Autres entretiens</h2><button *ngFor="let entretien of entretiens" (click)="select(entretien)" [class.active]="selected?.id === entretien.id">Candidat {{ entretien.candidature_id.slice(0, 8) }} · {{ entretien.date | date:'d MMM, HH:mm' }}</button></div>
+      </ng-container>
+    </section>
+  </div>
+</main>

@@ -1,0 +1,62 @@
+<main class="orientation-shell">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <nav class="steps" aria-label="Progression">
+      <span class="step active"><b>1</b>Discuter</span><i></i>
+      <span class="step" (click)="openOrientation()"><b>2</b>Orientation</span><i></i>
+      <span class="step" (click)="openPreinscription()"><b>3</b>Préinscription</span><i></i>
+      <span class="step"><b>4</b>QCM</span><i></i>
+      <span class="step"><b>5</b>Rendez-vous</span>
+    </nav>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><span>♧</span><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <div class="workspace">
+    <section class="chat-area">
+      <div class="date-label">Aujourd'hui · conversation en tunisien / عربي</div>
+      <div *ngIf="loading" class="loading">Chargement de votre conversation...</div>
+      <div class="messages" *ngIf="!loading">
+        <div class="bubble assistant welcome">Marhba ! Je suis SmartCampus AI. Tu peux me parler en français, en tunisien ou en Arabi, à l'écrit ou à la voix.<br><strong>Qu'est-ce qui t'intéresse ?</strong><small>SmartCampus AI · agent conversation</small></div>
+        <ng-container *ngFor="let message of messages">
+          <div class="bubble" [class.assistant]="message.est_assistant" [class.user]="!message.est_assistant">
+            {{ message.contenu }}<small>{{ message.est_assistant ? 'SmartCampus AI · agent conversation' : 'Vous' }}</small>
+          </div>
+        </ng-container>
+        <div class="suggestions" *ngIf="!messages.length">
+          <div class="bubble assistant">Pour mieux vous orienter, dites-moi votre niveau d'études et le domaine qui vous intéresse.<small>Profil mis à jour · question adaptative</small></div>
+          <div class="bubble user">Je cherche un parcours en informatique après le bac.<small>Transcription · tunisien détecté</small></div>
+        </div>
+        <div class="path-grid" *ngIf="parcours.length">
+          <article class="path-card" *ngFor="let item of parcours | slice:0:2">
+            <header><strong>{{ item.nom }}</strong><b>{{ item.etablissement }}</b></header>
+            <span class="meta">{{ item.etablissement }} · Parcours universitaire</span>
+            <p>{{ item.description || 'Un parcours progressif et adapté à votre projet académique.' }}</p>
+            <button (click)="draft = 'Je voudrais en savoir plus sur ' + item.nom">Voir le détail</button>
+          </article>
+        </div>
+      </div>
+      <div *ngIf="error" class="error">{{ error }}</div>
+      <form class="composer" (ngSubmit)="send()">
+        <button type="button" class="voice" aria-label="Message vocal">♩</button>
+        <input [(ngModel)]="draft" name="draft" maxlength="5000" placeholder="Écris ou parle : français, tunisien ou Arabi" [disabled]="sending || !conversation">
+        <button type="submit" class="send" [disabled]="sending || !draft.trim() || !conversation">➤</button>
+      </form>
+    </section>
+
+    <aside class="profile-panel">
+      <h2>Profil du candidat</h2>
+      <p>Construit progressivement pendant la conversation</p>
+      <div class="completion"><strong>Profil complété</strong><span>70 %</span><div><i></i></div></div>
+      <section class="profile-card">
+        <label>Niveau scolaire</label><strong>Bac Mathématiques</strong>
+        <label>Objectif professionnel</label><strong>Ingénieur logiciel</strong>
+        <label>Préférence</label><strong>Pratique et progressive</strong>
+        <label>Langue détectée</label><strong>Arabi / tunisien</strong>
+        <label>Intérêts</label><div><em>Informatique</em><em>Maths</em></div>
+      </section>
+      <section class="agent-card"><strong>✦ Agent actif : Orientation</strong><p>Intention détectée : orientation (0,93).<br>Prochaine action : comparer Licence et Prépa.</p></section>
+      <button class="cta" (click)="openPreinscription()">Lancer la préinscription</button>
+      <button class="outline" (click)="draft = 'Je souhaite parler à un conseiller.'">Parler à un conseiller</button>
+    </aside>
+  </div>
+</main>

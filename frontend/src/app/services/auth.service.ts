@@ -21,7 +21,7 @@ export interface TokenResponse {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hôte.
-  private apiUrl = 'http://127.0.0.1:8001/api';
+  private apiUrl = 'http://127.0.0.1:8000/api';
   private tokenKey = 'access_token';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
