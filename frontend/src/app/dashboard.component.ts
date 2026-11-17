@@ -12,7 +12,7 @@ import { AuthService } from './services/auth.service';
       <h1>SmartCampus AI - Dashboard</h1>
       <p *ngIf="user">Bienvenue {{user.nom}} ({{user.role}})</p>
       <button (click)="logout()">Déconnexion</button>
-      <p>Backend API : http://127.0.0.1:8001/api</p>
+      <p>Backend API : http://127.0.0.1:8000/api</p>
     </div>
   `
 })
