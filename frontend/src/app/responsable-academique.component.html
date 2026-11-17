@@ -1,0 +1,64 @@
+<main class="academic-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <div class="role-badge">Responsable académique</div>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-title">Responsable académique <small>IIT / ISB</small></div>
+      <nav>
+        <button class="active">♙ <span>Candidats orientés</span></button>
+        <button>☷ <span>Recommandations</span></button>
+        <button>⌘ <span>Formations IIT</span></button>
+        <button>▥ <span>Statistiques</span></button>
+      </nav>
+      <div class="profile">{{ userName }}<small>Responsable académique</small></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="heading">
+        <div><h1>Candidats orientés vers l’IIT</h1><p>Vérifie, confirme ou ajuste les recommandations générées par l’assistant.</p></div>
+        <strong class="pending">{{ pendingCount }} à valider</strong>
+      </div>
+      <div *ngIf="loading" class="state">Chargement des candidatures...</div>
+      <div *ngIf="error" class="error">{{ error }}</div>
+      <div *ngIf="!loading && !error" class="board">
+        <section class="table-card">
+          <div class="filters">
+            <strong>Candidatures</strong>
+            <select [(ngModel)]="filter" aria-label="Filtrer par statut">
+              <option value="">Tous les statuts</option>
+              <option value="EN_ATTENTE">À valider</option>
+              <option value="VALIDEE">Validées</option>
+              <option value="REJETEE">Rejetées</option>
+              <option value="REORIENTEE">Réorientées</option>
+            </select>
+          </div>
+          <div *ngFor="let candidature of filteredCandidatures" class="candidate-row" [class.selected]="selected?.id === candidature.id" (click)="select(candidature)">
+            <span class="candidate-avatar">{{ candidature.candidat_id.slice(0, 2).toUpperCase() }}</span>
+            <div class="candidate"><strong>Candidat {{ candidature.candidat_id.slice(0, 6) }}</strong><small>Déposée le {{ candidature.date_depot | date:'d MMM yyyy' }}</small></div>
+            <span class="path">{{ candidature.parcours.nom }}<small>{{ candidature.parcours.etablissement }}</small></span>
+            <span class="status">{{ candidature.statut }}</span>
+          </div>
+          <p *ngIf="!filteredCandidatures.length" class="empty">Aucune candidature pour ce filtre.</p>
+        </section>
+
+        <aside class="detail-card" *ngIf="selected; else noSelection">
+          <div class="detail-head"><span class="candidate-avatar">{{ selected.candidat_id.slice(0, 2).toUpperCase() }}</span><div><h2>Candidat {{ selected.candidat_id.slice(0, 8) }}</h2><p>{{ selected.parcours.nom }} · {{ selected.parcours.etablissement }}</p></div></div>
+          <div class="recommendation"><strong>Recommandation du dossier</strong><span>{{ selected.parcours.nom }}</span><small>Parcours sélectionné par le candidat.</small></div>
+          <div class="result"><h3>Résultat du QCM</h3><strong>{{ qcm?.score ?? '—' }}<small>/100</small></strong><span *ngIf="detailsLoading">Chargement...</span><span *ngIf="!detailsLoading && !qcm">QCM non réalisé</span></div>
+          <div class="decision-form" *ngIf="selected.statut === 'EN_ATTENTE'">
+            <label>Commentaire<textarea [(ngModel)]="comment" rows="2" placeholder="Ajouter une remarque (optionnel)"></textarea></label>
+            <label>Parcours de réorientation<select [(ngModel)]="destinationId"><option value="">Sélectionner si nécessaire</option><option *ngFor="let item of parcours" [value]="item.id" [disabled]="item.id === selected.parcours.id">{{ item.nom }} ({{ item.etablissement }})</option></select></label>
+            <div *ngIf="decisionError" class="error">{{ decisionError }}</div>
+            <div class="decision-actions"><button class="accept" (click)="decide('ACCEPTER')" [disabled]="saving">Confirmer</button><button class="redirect" (click)="decide('REORIENTER')" [disabled]="saving">Réorienter</button><button class="reject" (click)="decide('REJETER')" [disabled]="saving">Rejeter</button></div>
+          </div>
+          <div *ngIf="selected.decision" class="saved-decision">Décision enregistrée : {{ selected.decision.decision }}</div>
+        </aside>
+        <ng-template #noSelection><aside class="detail-card empty">Sélectionnez une candidature pour voir son détail.</aside></ng-template>
+      </div>
+    </section>
+  </div>
+</main>
