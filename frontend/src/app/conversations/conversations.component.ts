@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
-import { Conversation, ConversationService, Message } from './services/conversation.service';
+import { AuthService } from '../services/auth.service';
+import { Conversation, ConversationService, Message } from '../services/conversation.service';
 
 interface Parcours {
   id: string;
@@ -43,7 +43,7 @@ export class ConversationsComponent implements OnInit {
   ngOnInit(): void {
     const id = sessionStorage.getItem('conversation_id');
     id ? this.load(id) : this.newConversation();
-    this.http.get<{ items: Parcours[] }>('http://127.0.0.1:8000/api/parcours').subscribe({
+    this.http.get<{ items: Parcours[] }>('/api/parcours').subscribe({
       next: response => this.parcours = response.items,
       error: () => this.parcours = []
     });

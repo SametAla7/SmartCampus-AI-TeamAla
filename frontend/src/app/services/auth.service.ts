@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
@@ -20,8 +20,8 @@ export interface TokenResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hôte.
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/h�te.
+  private apiUrl = '/api';
   private tokenKey = 'access_token';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();

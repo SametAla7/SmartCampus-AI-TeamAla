@@ -1,8 +1,8 @@
-ï»¿import { Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -45,12 +45,12 @@ export class LoginComponent {
       this.auth.register(nom, this.email, this.password).subscribe({
         next: () => {
           this.loading = false;
-          this.message = 'Compte crÃ©Ã© avec succÃ¨s. Vous pouvez vous connecter.';
+          this.message = 'Compte créé avec succès. Vous pouvez vous connecter.';
           this.mode = 'login';
         },
         error: (err) => {
           this.loading = false;
-          this.error = err.error?.detail || 'Erreur lors de la crÃ©ation du compte';
+          this.error = err.error?.detail || 'Erreur lors de la création du compte';
         }
       });
     }

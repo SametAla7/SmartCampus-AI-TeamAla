@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 interface Parcours {
   id: string;
@@ -35,7 +35,7 @@ export class OrientationComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<{ items: Parcours[] }>('http://127.0.0.1:8000/api/parcours').subscribe({
+    this.http.get<{ items: Parcours[] }>('/api/parcours').subscribe({
       next: response => {
         this.parcours = response.items;
         this.selected = this.parcours[0] ?? null;

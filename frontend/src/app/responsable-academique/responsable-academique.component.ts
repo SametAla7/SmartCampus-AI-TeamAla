@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 interface Parcours {
   id: string;
@@ -49,7 +49,7 @@ export class ResponsableAcademiqueComponent implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private router = inject(Router);
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  private apiUrl = '/api';
 
   candidatures: Candidature[] = [];
   parcours: Parcours[] = [];
