@@ -7,11 +7,11 @@ import { RouterOutlet } from '@angular/router';
 import { authInterceptor } from './app/services/auth.interceptor';
 
 const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./app/login.component').then(m => m.LoginComponent) },
+  { path: 'login', loadComponent: () => import('./app/login/login.component').then(m => m.LoginComponent) },
   { path: 'forgot-password', loadComponent: () => import('./app/forgot-password.component').then(m => m.ForgotPasswordComponent) },
   { path: 'reset-password', loadComponent: () => import('./app/reset-password.component').then(m => m.ResetPasswordComponent) },
   { path: 'oauth/callback', loadComponent: () => import('./app/oauth-callback.component').then(m => m.OAuthCallbackComponent) },
-  { path: 'dashboard', loadComponent: () => import('./app/dashboard.component').then(m => m.DashboardComponent) },
+  { path: 'dashboard', loadComponent: () => import('./app/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: '', redirectTo: 'login', pathMatch: 'full' }
 ];
 
