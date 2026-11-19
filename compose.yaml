@@ -20,6 +20,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: postgresql+psycopg://smartcampus:${POSTGRES_PASSWORD:-smartcampus-local}@db:5432/smartcampus
