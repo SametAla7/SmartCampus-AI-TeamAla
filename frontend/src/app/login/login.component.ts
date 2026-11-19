@@ -1,16 +1,8 @@
-<<<<<<< HEAD:frontend/src/app/login.component.ts
-ï»¿import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
-=======
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
->>>>>>> 0402820fa68d92b4d09daeb991b9ad25ed221871:frontend/src/app/login/login.component.ts
 
 @Component({
   selector: 'app-login',
@@ -57,20 +49,12 @@ export class LoginComponent implements OnInit {
       this.auth.register(nom, this.email, this.password).subscribe({
         next: () => {
           this.loading = false;
-<<<<<<< HEAD:frontend/src/app/login.component.ts
           this.message = 'Votre compte a Ã©tÃ© crÃ©Ã©. Consultez votre boÃ®te mail pour confirmer votre adresse avant de vous connecter.';
-=======
-          this.message = 'Compte créé avec succès. Vous pouvez vous connecter.';
->>>>>>> 0402820fa68d92b4d09daeb991b9ad25ed221871:frontend/src/app/login/login.component.ts
           this.mode = 'login';
         },
         error: (err) => {
           this.loading = false;
-<<<<<<< HEAD:frontend/src/app/login.component.ts
           this.error = this.formatError(err, 'Erreur lors de la crÃ©ation du compte');
-=======
-          this.error = err.error?.detail || 'Erreur lors de la création du compte';
->>>>>>> 0402820fa68d92b4d09daeb991b9ad25ed221871:frontend/src/app/login/login.component.ts
         }
       });
     }
