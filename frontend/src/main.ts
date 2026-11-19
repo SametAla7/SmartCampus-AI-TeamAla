@@ -8,6 +8,11 @@ import { authInterceptor } from './app/services/auth.interceptor';
 
 const routes: Routes = [
   { path: 'login', loadComponent: () => import('./app/login/login.component').then(m => m.LoginComponent) },
+  { path: 'forgot-password', loadComponent: () => import('./app/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+  { path: 'reset-password', loadComponent: () => import('./app/reset-password.component').then(m => m.ResetPasswordComponent) },
+  { path: 'oauth/callback', loadComponent: () => import('./app/oauth-callback.component').then(m => m.OAuthCallbackComponent) },
+  
+  
   { path: 'dashboard', loadComponent: () => import('./app/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'conversations', loadComponent: () => import('./app/conversations/conversations.component').then(m => m.ConversationsComponent) },
   { path: 'orientation', loadComponent: () => import('./app/orientation/orientation.component').then(m => m.OrientationComponent) },

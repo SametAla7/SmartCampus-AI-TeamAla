@@ -20,8 +20,8 @@ export interface TokenResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hôte.
-  private apiUrl = '/api';
+  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hÃ´te.
+  private apiUrl = 'http://127.0.0.1:8000/api';
   private tokenKey = 'access_token';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
@@ -47,10 +47,42 @@ export class AuthService {
     return this.http.post<User>(`${this.apiUrl}/auth/register`, { nom, email, mot_de_passe, role: 'CANDIDAT' });
   }
 
+  verifyEmail(token: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/verify-email`, { token });
+  }
+
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/resend-verification`, { email });
+  }
+
   me(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/auth/me`).pipe(
       tap(user => this.userSubject.next(user))
     );
+  }
+
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, nouveau_mot_de_passe: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, { token, nouveau_mot_de_passe });
+  }
+
+  oauthProviders(): Observable<{ google: boolean }> {
+    return this.http.get<{ google: boolean }>(`${this.apiUrl}/auth/oauth/providers`);
+  }
+
+  /** Navigation pleine page (pas XHR) : le backend redirige vers Google puis revient sur /oauth/callback. */
+  startGoogleLogin() {
+    window.location.href = `${this.apiUrl}/auth/oauth/google/login`;
+  }
+
+  /** Enregistre les jetons recus apres OAuth puis charge l'utilisateur courant. */
+  completeOAuth(accessToken: string, refreshToken: string): Observable<User> {
+    localStorage.setItem(this.tokenKey, accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    return this.me();
   }
 
   logout() {
