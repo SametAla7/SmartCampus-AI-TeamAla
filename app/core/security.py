@@ -109,6 +109,26 @@ def reset_token_matches_password(payload: dict, hashed_password: str) -> bool:
     return payload.get("pwd") == _password_fingerprint(hashed_password)
 
 
+def create_email_verification_token(user_id: uuid.UUID, email: str) -> str:
+    now = _now()
+    exp_time = now + datetime.timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS)
+    payload = {
+        "sub": str(user_id),
+        "type": "email_verification",
+        "email": email.lower(),
+        "iat": int(now.timestamp()),
+        "exp": int(exp_time.timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_email_verification_token(token: str) -> dict:
+    try:
+        return decode_token(token, expected_type="email_verification")
+    except APIError:
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
+
+
 def create_oauth_state(nonce: str) -> str:
     now = _now()
     exp_time = now + datetime.timedelta(minutes=settings.OAUTH_STATE_EXPIRE_MINUTES)

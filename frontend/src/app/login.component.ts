@@ -24,11 +24,13 @@ export class LoginComponent implements OnInit {
   loading = false;
   message = '';
   error = '';
+  emailVerificationRequired = false;
 
   submit() {
     this.loading = true;
     this.message = '';
     this.error = '';
+    this.emailVerificationRequired = false;
     
     if (this.mode === 'login') {
       this.auth.login(this.email, this.password).subscribe({
@@ -38,6 +40,7 @@ export class LoginComponent implements OnInit {
         },
         error: (err) => {
           this.loading = false;
+          this.emailVerificationRequired = err?.error?.error?.code === 'EMAIL_NOT_VERIFIED';
           this.error = this.formatError(err, 'Identifiants invalides');
         }
       });
@@ -46,7 +49,7 @@ export class LoginComponent implements OnInit {
       this.auth.register(nom, this.email, this.password).subscribe({
         next: () => {
           this.loading = false;
-          this.message = 'Compte créé avec succès. Vous pouvez vous connecter.';
+          this.message = 'Votre compte a été créé. Consultez votre boîte mail pour confirmer votre adresse avant de vous connecter.';
           this.mode = 'login';
         },
         error: (err) => {
@@ -89,8 +92,24 @@ export class LoginComponent implements OnInit {
   };
 
   ngOnInit() {
+    const verificationToken = this.route.snapshot.queryParamMap.get('verify_token');
+    if (verificationToken) {
+      this.loading = true;
+      this.auth.verifyEmail(verificationToken).subscribe({
+        next: result => {
+          this.loading = false;
+          this.message = result.message;
+          this.router.navigate(['/login'], { replaceUrl: true });
+        },
+        error: err => {
+          this.loading = false;
+          this.error = this.formatError(err, 'Impossible de confirmer cette adresse email.');
+          this.router.navigate(['/login'], { replaceUrl: true });
+        }
+      });
+    }
     const code = this.route.snapshot.queryParamMap.get('error');
-    if (code) {
+    if (code && !verificationToken) {
       this.error = LoginComponent.OAUTH_ERRORS[code] || 'Échec de la connexion.';
     }
     this.auth.oauthProviders().subscribe({
@@ -109,5 +128,19 @@ export class LoginComponent implements OnInit {
 
   forgotPassword() {
     this.router.navigate(['/forgot-password']);
+  }
+
+  resendVerification() {
+    this.loading = true;
+    this.auth.resendVerification(this.email).subscribe({
+      next: result => {
+        this.loading = false;
+        this.message = result.message;
+      },
+      error: err => {
+        this.loading = false;
+        this.error = this.formatError(err, 'Impossible de renvoyer le lien pour le moment.');
+      }
+    });
   }
 }

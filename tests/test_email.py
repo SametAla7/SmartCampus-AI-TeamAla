@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.core import security
 from app.core.config import settings
+from app.models.user import User
 from app.services import email_service
 from tests.conftest import create_user, login_payload
 
@@ -81,14 +82,26 @@ def test_send_email_returns_false_on_smtp_error(monkeypatch) -> None:
     assert email_service.send_email("dest@test.com", "Sujet", "Corps") is False
 
 
-def test_register_sends_welcome_email(client: TestClient, monkeypatch) -> None:
-    welcomed: list = []
-    monkeypatch.setattr("app.api.auth.send_welcome_email", lambda nom, email: welcomed.append((nom, email)))
+def test_register_sends_verification_email(client: TestClient, monkeypatch, db_session) -> None:
+    sent: list = []
+    monkeypatch.setattr(
+        "app.api.auth.send_email_verification_email",
+        lambda nom, email, token: sent.append((nom, email, token)),
+    )
     response = client.post(
         "/api/auth/register", json={"nom": "Nouveau Candidat", "email": "nouveau@test.com", "mot_de_passe": "password123"}
     )
     assert response.status_code == 201
-    assert welcomed == [("Nouveau Candidat", "nouveau@test.com")]
+    assert len(sent) == 1
+    assert sent[0][:2] == ("Nouveau Candidat", "nouveau@test.com")
+    user = db_session.query(User).filter_by(email="nouveau@test.com").one()
+    assert user.email_verified is False
+    login = client.post("/api/auth/login", json={"email": user.email, "mot_de_passe": "password123"})
+    assert login.status_code == 401
+    assert login.json()["error"]["code"] == "EMAIL_NOT_VERIFIED"
+    verified = client.post("/api/auth/verify-email", json={"token": sent[0][2]})
+    assert verified.status_code == 200
+    assert login_payload(client, user.email)["user"]["email"] == user.email
 
 
 def test_register_succeeds_even_if_smtp_unconfigured(client: TestClient) -> None:
@@ -96,6 +109,49 @@ def test_register_succeeds_even_if_smtp_unconfigured(client: TestClient) -> None
         "/api/auth/register", json={"nom": "Nouveau Candidat", "email": "nouveau@test.com", "mot_de_passe": "password123"}
     )
     assert response.status_code == 201
+    login = client.post("/api/auth/login", json={"email": "nouveau@test.com", "mot_de_passe": "password123"})
+    assert login.status_code == 401
+    assert login.json()["error"]["code"] == "EMAIL_NOT_VERIFIED"
+
+
+def test_resend_verification_is_generic_and_only_sends_to_pending_accounts(
+    client: TestClient, db_session, monkeypatch
+) -> None:
+    from tests.conftest import create_user
+
+    pending = create_user(db_session, "En attente", "pending@test.com")
+    pending.email_verified = False
+    db_session.commit()
+    sent: list = []
+    monkeypatch.setattr(
+        "app.api.auth.send_email_verification_email",
+        lambda nom, email, token: sent.append((nom, email, token)),
+    )
+
+    pending_response = client.post("/api/auth/resend-verification", json={"email": pending.email})
+    unknown_response = client.post("/api/auth/resend-verification", json={"email": "unknown@test.com"})
+    assert pending_response.status_code == unknown_response.status_code == 202
+    assert pending_response.json() == unknown_response.json()
+    assert [item[1] for item in sent] == [pending.email]
+
+
+def test_verification_rejects_invalid_and_wrong_type_tokens(client: TestClient, db_session) -> None:
+    user = create_user(db_session, "Candidat Test", "candidat@test.com")
+    access = security.create_access_token(user.id, user.role.value)
+    invalid = client.post("/api/auth/verify-email", json={"token": "not-a-token"})
+    wrong_type = client.post("/api/auth/verify-email", json={"token": access})
+    assert invalid.status_code == wrong_type.status_code == 401
+    assert wrong_type.json()["error"]["code"] == "EMAIL_VERIFICATION_INVALID"
+
+
+def test_verification_email_has_branded_html_and_confirmation_link(monkeypatch) -> None:
+    _configure_smtp(monkeypatch)
+    assert email_service.send_email_verification_email("Candidat", "dest@test.com", "secure-token")
+    message = FakeSMTP.instances[0].sent
+    html = message.get_body(preferencelist=("html",)).get_content()
+    assert "Confirmer mon adresse email" in html
+    assert "secure-token" in html
+    assert "SmartCampus AI" in html
 
 
 def test_forgot_password_unknown_email_same_answer_no_email(client: TestClient, sent_reset_emails) -> None:

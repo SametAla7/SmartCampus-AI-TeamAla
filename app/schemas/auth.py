@@ -36,5 +36,13 @@ class ResetPasswordRequest(BaseModel):
     nouveau_mot_de_passe: str = Field(..., min_length=8, max_length=128)
 
 
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(..., min_length=1)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr = Field(..., max_length=320)
+
+
 class MessageResponse(BaseModel):
     message: str

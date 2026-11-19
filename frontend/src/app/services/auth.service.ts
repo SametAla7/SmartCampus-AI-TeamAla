@@ -21,7 +21,7 @@ export interface TokenResponse {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hôte.
-  private apiUrl = 'http://127.0.0.1:8001/api';
+  private apiUrl = 'http://127.0.0.1:8000/api';
   private tokenKey = 'access_token';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
@@ -45,6 +45,14 @@ export class AuthService {
 
   register(nom: string, email: string, mot_de_passe: string): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/auth/register`, { nom, email, mot_de_passe, role: 'CANDIDAT' });
+  }
+
+  verifyEmail(token: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/verify-email`, { token });
+  }
+
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/resend-verification`, { email });
   }
 
   me(): Observable<User> {

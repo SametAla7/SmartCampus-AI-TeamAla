@@ -3,6 +3,7 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 
 from app.api.deps import get_current_user
+from app.core import security
 from app.db.session import Session, get_db
 from app.models.user import User, UserRole
 from app.schemas.auth import (
@@ -10,12 +11,21 @@ from app.schemas.auth import (
     LoginRequest,
     MessageResponse,
     RefreshRequest,
+    ResendVerificationRequest,
     ResetPasswordRequest,
     TokenResponse,
+    VerifyEmailRequest,
 )
 from app.schemas.user import UserCreate, UserRead
-from app.services.auth_service import login, refresh, request_password_reset, reset_password
-from app.services.email_service import send_password_reset_email, send_welcome_email
+from app.services.auth_service import (
+    login,
+    prepare_email_verification,
+    refresh,
+    request_password_reset,
+    reset_password,
+    verify_email,
+)
+from app.services.email_service import send_email_verification_email, send_password_reset_email
 from app.services.user_service import create_user
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
@@ -32,10 +42,32 @@ def register_endpoint(
 ) -> UserRead:
     # Forcer le role candidat pour l'inscription publique
     user_data.role = UserRole.CANDIDAT
-    created = create_user(db, user_data)
-    # Email de bienvenue en tache de fond : un echec SMTP ne doit jamais bloquer l'inscription.
-    background_tasks.add_task(send_welcome_email, created.nom, created.email)
+    created = create_user(db, user_data, email_verified=False)
+    token = security.create_email_verification_token(created.id, created.email)
+    background_tasks.add_task(send_email_verification_email, created.nom, created.email, token)
     return created
+
+
+@router.post("/verify-email", response_model=MessageResponse, summary="Confirmer une adresse email")
+def verify_email_endpoint(payload: VerifyEmailRequest, db: Session = Depends(get_db)) -> MessageResponse:
+    verify_email(db, payload.token)
+    return MessageResponse(message="Adresse email confirmée. Vous pouvez maintenant vous connecter.")
+
+
+@router.post(
+    "/resend-verification",
+    response_model=MessageResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Renvoyer le lien de confirmation",
+)
+def resend_verification_endpoint(
+    payload: ResendVerificationRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+) -> MessageResponse:
+    prepared = prepare_email_verification(db, payload.email)
+    if prepared is not None:
+        nom, email, token = prepared
+        background_tasks.add_task(send_email_verification_email, nom, email, token)
+    return MessageResponse(message="Si ce compte doit être vérifié, un nouveau lien vient d’être envoyé.")
 
 
 @router.post(

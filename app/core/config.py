@@ -174,6 +174,7 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "SmartCampus AI"
     SMTP_TIMEOUT_SECONDS: int = 10
     PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+    EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
 
     @property
     def smtp_configured(self) -> bool:
@@ -183,7 +184,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     # Doit correspondre EXACTEMENT a l'URI de redirection declaree dans la console Google Cloud
-    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8001/api/auth/oauth/google/callback"
+    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8000/api/auth/oauth/google/callback"
     OAUTH_STATE_EXPIRE_MINUTES: int = 10
 
     @property

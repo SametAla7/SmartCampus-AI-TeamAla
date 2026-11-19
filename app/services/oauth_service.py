@@ -122,4 +122,7 @@ def find_or_create_oauth_user(db: Session, email: str, nom: str) -> User:
                 raise
     if not user.est_actif:
         raise unauthenticated("USER_INACTIVE", "Ce compte est desactive.")
+    if not user.email_verified:
+        user.email_verified = True
+        db.commit()
     return user

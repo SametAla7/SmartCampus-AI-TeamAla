@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.api import admin, auth, candidatures, conversations, dashboard, documents, entretiens, oauth, parcours, users
@@ -37,14 +38,22 @@ async def lifespan(app: FastAPI):
             "Verifiez DATABASE_URL/DATABASE_URL_DIRECT dans le .env du projet, reseau et SSL."
         )
     # Création des tables au démarrage si activée (dev). En production, préférer les migrations Alembic.
-    if settings.CREATE_TABLES_ON_STARTUP:
-        try:
+    try:
+        if settings.CREATE_TABLES_ON_STARTUP:
             Base.metadata.create_all(bind=engine)
-        except Exception as exc:
-            raise RuntimeError(
-                "Echec de l'initialisation du schema au demarrage. "
-                "Verifiez les droits/schema (sans exposer d'identifiants)."
-            ) from exc
+        if inspect(engine).has_table("users"):
+            columns = {column["name"] for column in inspect(engine).get_columns("users")}
+            if "email_verified" not in columns:
+                # Existing accounts predate verification and remain usable; new public signups opt out.
+                with engine.begin() as connection:
+                    connection.execute(
+                        text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT TRUE")
+                    )
+    except Exception as exc:
+        raise RuntimeError(
+            "Echec de l'initialisation du schema au demarrage. "
+            "Verifiez les droits/schema (sans exposer d'identifiants)."
+        ) from exc
     yield
     engine.dispose()
 

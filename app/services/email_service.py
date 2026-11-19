@@ -1,8 +1,6 @@
-"""Service - Envoi d'emails via SMTP (bienvenue, reinitialisation de mot de passe).
+"""Service - Envoi d'emails via SMTP (verification, bienvenue, reinitialisation).
 
-- Si SMTP n'est pas configure, aucun email n'est envoye : l'evenement est journalise
-  (et en environnement de developpement, le contenu est affiche dans les logs pour
-  pouvoir tester le parcours sans serveur SMTP).
+- Si SMTP n'est pas configure, aucun email n'est envoye : l'evenement est journalise.
 - Les erreurs d'envoi ne font jamais echouer une requete API : `send_email` renvoie
   simplement False. Les identifiants SMTP ne sont jamais journalises.
 """
@@ -24,8 +22,6 @@ def send_email(to: str, subject: str, text_body: str, html_body: str | None = No
     """Envoie un email. Retourne True si le serveur SMTP l'a accepte."""
     if not settings.smtp_configured:
         logger.warning("SMTP non configure : email '%s' vers %s non envoye.", subject, to)
-        if settings.APP_ENV == "development":
-            logger.info("[DEV] Contenu de l'email vers %s :\n%s", to, text_body)
         return False
 
     message = EmailMessage()
@@ -62,11 +58,53 @@ def send_email(to: str, subject: str, text_body: str, html_body: str | None = No
 
 def _html_layout(title: str, body_html: str) -> str:
     return (
-        '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f2937">'
-        f'<h2 style="color:#1d4ed8">{escape(title)}</h2>{body_html}'
-        '<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
-        f'<p style="font-size:12px;color:#6b7280">{escape(settings.APP_NAME)}</p></div>'
+        '<!doctype html><html lang="fr"><head><meta charset="utf-8"></head>'
+        '<body style="margin:0;padding:32px 16px;background:#f3f6fb;'
+        'font-family:Arial,Helvetica,sans-serif;color:#1f2937">'
+        '<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e5eaf2;'
+        'border-radius:16px;overflow:hidden">'
+        '<div style="padding:24px 32px;background:#123b73;color:#fff">'
+        f'<p style="margin:0;font-size:13px;letter-spacing:1.5px;font-weight:bold">{escape(settings.APP_NAME)}</p>'
+        '</div><div style="padding:32px">'
+        f'<h1 style="margin:0 0 20px;font-size:24px;color:#123b73">{escape(title)}</h1>'
+        f'{body_html}'
+        '<hr style="border:0;border-top:1px solid #e5eaf2;margin:28px 0 18px">'
+        '<p style="margin:0;color:#718096;font-size:12px;line-height:1.6">'
+        'Vous recevez cet email à la suite d’une demande effectuée sur SmartCampus AI. '
+        'Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.'
+        '</p></div></div></body></html>'
     )
+
+
+def build_email_verification_link(token: str) -> str:
+    return f"{settings.FRONTEND_URL}/login?verify_token={quote(token, safe='')}"
+
+
+def send_email_verification_email(nom: str, email: str, token: str) -> bool:
+    link = build_email_verification_link(token)
+    hours = settings.EMAIL_VERIFICATION_EXPIRE_HOURS
+    subject = f"{settings.APP_NAME} - Confirmez votre adresse email"
+    text = (
+        f"Bonjour {nom},\n\n"
+        f"Merci d'avoir rejoint {settings.APP_NAME}. Confirmez votre adresse email "
+        f"pour activer votre compte :\n{link}\n\n"
+        f"Ce lien expire dans {hours} heures. Si vous n'avez pas créé de compte, "
+        "ignorez simplement cet email.\n"
+    )
+    html = _html_layout(
+        "Bienvenue parmi nous !",
+        f'<p style="font-size:16px;line-height:1.7">Bonjour {escape(nom)},</p>'
+        '<p style="font-size:15px;line-height:1.7;color:#4b5563">'
+        'Merci de rejoindre SmartCampus AI. Pour sécuriser votre compte et accéder à votre espace, '
+        'confirmez votre adresse email en cliquant ci-dessous.</p>'
+        f'<p style="margin:28px 0"><a href="{escape(link)}" '
+        'style="display:inline-block;background:#1760d4;color:#fff;padding:14px 22px;'
+        'border-radius:8px;text-decoration:none;font-weight:bold">Confirmer mon adresse email</a></p>'
+        f'<p style="font-size:13px;line-height:1.6;color:#718096">Ce lien est valable {hours} heures. '
+        'Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :</p>'
+        f'<p style="font-size:12px;line-height:1.6;word-break:break-all;color:#1760d4">{escape(link)}</p>',
+    )
+    return send_email(email, subject, text, html)
 
 
 def send_welcome_email(nom: str, email: str) -> bool:

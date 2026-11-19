@@ -19,6 +19,8 @@ def authenticate(db: Session, login: LoginRequest) -> User:
         raise unauthenticated("INVALID_CREDENTIALS", "Email ou mot de passe invalide.")
     if not user.est_actif:
         raise unauthenticated("USER_INACTIVE", "Ce compte est desactive.")
+    if not user.email_verified:
+        raise unauthenticated("EMAIL_NOT_VERIFIED", "Veuillez verifier votre adresse email avant de vous connecter.")
     return user
 
 
@@ -69,12 +71,37 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
     db.commit()
 
 
+def verify_email(db: Session, token: str) -> None:
+    payload = security.decode_email_verification_token(token)
+    try:
+        user_id = uuid.UUID(payload["sub"])
+    except (KeyError, TypeError, ValueError):
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or user.email.lower() != str(payload.get("email", "")).lower():
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
+    if user.email_verified:
+        return
+    user.email_verified = True
+    db.commit()
+
+
+def prepare_email_verification(db: Session, email: str) -> tuple[str, str, str] | None:
+    user = db.query(User).filter(func.lower(User.email) == email.lower()).first()
+    if user is None or not user.est_actif or user.email_verified:
+        return None
+    token = security.create_email_verification_token(user.id, user.email)
+    return user.nom, user.email, token
+
+
 def refresh(db: Session, refresh_token: str) -> TokenResponse:
     payload = security.decode_token(refresh_token, expected_type="refresh")
     user_id = uuid.UUID(payload["sub"])
     user = db.query(User).filter(User.id == user_id).first()
     if user is None or not user.est_actif:
         raise unauthenticated("USER_INACTIVE", "Compte desactive.")
+    if not user.email_verified:
+        raise unauthenticated("EMAIL_NOT_VERIFIED", "Veuillez verifier votre adresse email avant de vous connecter.")
     return TokenResponse(
         access_token=security.create_access_token(user.id, user.role.value),
         refresh_token=security.create_refresh_token(user.id, user.role.value),
