@@ -1,0 +1,37 @@
+<main class="direction-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <span class="role-badge">Direction</span>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <strong>Direction</strong>
+      <nav><button class="active">▥ <span>Tableau de bord</span></button><button>◷ <span>Entretiens</span></button><button>⌘ <span>Formations</span></button><button>◌ <span>Dossiers en attente</span></button></nav>
+      <div class="profile">{{ userName }}<small>Direction</small></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="heading"><div><h1>Pilotage des admissions</h1><p>Orientation, préinscription et conversion · données issues du backend.</p></div><div class="heading-actions"><span>Statistiques globales</span><button class="export" (click)="exportReport('pdf')" [disabled]="exporting">Exporter PDF</button><button class="export" (click)="exportReport('xlsx')" [disabled]="exporting">Exporter Excel</button></div></div>
+      <div *ngIf="loading" class="state">Chargement des statistiques...</div>
+      <div *ngIf="error" class="error">{{ error }}</div>
+      <ng-container *ngIf="!loading && stats">
+        <div class="metrics">
+          <article><span>Candidatures</span><strong>{{ stats.total_candidatures }}</strong><small>Enregistrées dans le système</small></article>
+          <article><span>Candidatures validées</span><strong>{{ validated }}</strong><small>{{ stats.candidatures_par_statut['VALIDEE'] || 0 }} dossier(s) accepté(s)</small></article>
+          <article><span>Entretiens réalisés</span><strong>{{ stats.nombre_entretiens }}</strong><small>Données des entretiens</small></article>
+          <article><span>Dossiers en attente</span><strong>{{ pending }}</strong><small>À traiter</small></article>
+        </div>
+        <div class="charts">
+          <section class="card conversion"><h2>Répartition des candidatures</h2><p>Vue selon les statuts enregistrés.</p><div class="bar-row" *ngFor="let item of stats.candidatures_par_statut | keyvalue"><span>{{ item.key }}</span><div><i [style.width.%]="stats.total_candidatures ? (item.value / stats.total_candidatures) * 100 : 0"></i></div><b>{{ item.value }}</b></div></section>
+          <section class="card formations"><h2>Formations les plus demandées</h2><p>Part des candidatures par parcours.</p><div class="bar-row" *ngFor="let item of stats.candidatures_par_parcours"><span>{{ item.nom || 'Parcours non renseigné' }}</span><div><i [style.width.%]="(item.total / maxParcoursTotal) * 100"></i></div><b>{{ item.total }}</b></div><small *ngIf="!stats.candidatures_par_parcours.length">Aucune donnée de parcours.</small></section>
+        </div>
+        <div class="lower">
+          <section class="card evolution"><h2>Évolution des candidatures</h2><p>Nombre de candidatures par mois.</p><div class="evolution-row" *ngFor="let item of stats.evolution"><span>{{ item.mois }}</span><div><i [style.width.%]="stats.total_candidatures ? (item.total / stats.total_candidatures) * 100 : 0"></i></div><b>{{ item.total }}</b></div><small *ngIf="!stats.evolution.length">Aucune évolution disponible.</small></section>
+          <section class="card system"><h2>Indicateurs disponibles</h2><div><span>Total candidatures</span><b>{{ stats.total_candidatures }}</b></div><div><span>Entretiens</span><b>{{ stats.nombre_entretiens }}</b></div><div><span>Parcours suivis</span><b>{{ stats.candidatures_par_parcours.length }}</b></div><p>Les indicateurs affichés correspondent strictement aux données fournies par l’API.</p></section>
+        </div>
+      </ng-container>
+    </section>
+  </div>
+</main>

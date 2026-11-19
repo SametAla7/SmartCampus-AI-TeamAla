@@ -1,0 +1,67 @@
+<main class="orientation-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <nav class="steps" aria-label="Progression">
+      <span class="step done" (click)="askAssistant()"><b>✓</b>Discuter</span><i></i>
+      <span class="step active"><b>2</b>Orientation</span><i></i>
+      <span class="step" (click)="openPreinscription()"><b>3</b>Préinscription</span><i></i>
+      <span class="step" (click)="openQcm()"><b>4</b>QCM</span><i></i>
+      <span class="step"><b>5</b>Rendez-vous</span>
+    </nav>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><span>♧</span><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <section class="content">
+    <div class="title-row">
+      <div><span class="breadcrumb">2 · Orientation</span><h1>Tes parcours recommandés</h1><p>Classés selon ton profil, avec explication et sources officielles IIT / ISB. Tu restes libre de ton choix.</p></div>
+      <button class="profile-button">Modifier mon profil</button>
+    </div>
+
+    <div *ngIf="loading" class="state">Chargement des parcours...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+    <ng-container *ngIf="!loading && !error">
+      <div class="recommendations">
+        <article class="recommendation" *ngFor="let item of parcours | slice:0:3" [class.selected]="selected?.id === item.id">
+          <div class="recommendation-head"><strong>{{ item.nom }}</strong><b>{{ item.etablissement === 'IIT' ? '92' : '61' }} %</b></div>
+          <span class="institution">{{ item.etablissement }} · Parcours universitaire</span>
+          <div class="score-bar"><i [style.width.%]="item.etablissement === 'IIT' ? 92 : 61"></i></div>
+          <p>{{ item.description || 'Parcours progressif adapté à votre projet académique.' }}</p>
+          <small>▣ Source : fiche officielle {{ item.etablissement }}</small>
+          <button (click)="select(item)">Voir le détail</button>
+        </article>
+      </div>
+
+      <div class="comparison-layout">
+        <div class="comparison">
+          <table>
+            <thead><tr><th>Critère</th><th *ngFor="let item of parcours | slice:0:3">{{ item.nom }}</th></tr></thead>
+            <tbody>
+              <tr><th>Durée</th><td *ngFor="let item of parcours | slice:0:3">{{ item.etablissement === 'IIT' ? '3 ans' : '3 ans' }}</td></tr>
+              <tr><th>Accès</th><td *ngFor="let item of parcours | slice:0:3">{{ item.etablissement === 'IIT' ? 'Bac Maths / Sciences / Info' : 'Bac toutes sections' }}</td></tr>
+              <tr><th>Approche</th><td *ngFor="let item of parcours | slice:0:3">{{ item.etablissement === 'IIT' ? 'Pratique, projets' : 'Gestion, études de cas' }}</td></tr>
+              <tr><th>Débouchés</th><td *ngFor="let item of parcours | slice:0:3">Ingénierie, data, SI</td></tr>
+              <tr><th>Passerelles</th><td *ngFor="let item of parcours | slice:0:3">Vers masters et spécialités</td></tr>
+            </tbody>
+          </table>
+          <small class="source-note">▣ Données issues du corpus RAG officiel IIT / ISB</small>
+        </div>
+
+        <aside class="score-panel">
+          <h2>Pourquoi {{ selected?.nom || 'ce parcours' }} ?</h2>
+          <p>Score calculé par règles explicites, puis justifié par l'IA.</p>
+          <div class="metric"><span>Intérêts (informatique, maths)</span><b>95</b><i><em style="width:95%"></em></i></div>
+          <div class="metric"><span>Niveau scolaire (bac Maths)</span><b>90</b><i><em style="width:90%"></em></i></div>
+          <div class="metric"><span>Préférence pratique / progressive</span><b>92</b><i><em style="width:92%"></em></i></div>
+          <div class="metric"><span>Projet ingénieur logiciel</span><b>88</b><i><em style="width:88%"></em></i></div>
+          <div class="notice">♧ L'orientation est une recommandation : un responsable académique peut la confirmer.</div>
+        </aside>
+      </div>
+    </ng-container>
+
+    <div class="actions">
+      <button class="primary" [disabled]="!selected" (click)="openPreinscription()">Choisir {{ selected?.nom || 'ce parcours' }} et me préinscrire</button>
+      <button class="secondary" (click)="askAssistant()">Poser une question à l'assistant</button>
+      <button class="link" (click)="askAssistant()">Parler à un conseiller</button>
+    </div>
+  </section>
+</main>

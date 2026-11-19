@@ -1,0 +1,66 @@
+<main class="dossier-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <nav class="steps" aria-label="Progression">
+      <span class="step done" (click)="openConversation()"><b>✓</b>Discuter</span><i></i>
+      <span class="step done" (click)="openOrientation()"><b>✓</b>Orientation</span><i></i>
+      <span class="step done" (click)="openPreinscription()"><b>✓</b>Préinscription</span><i></i>
+      <span class="step done" (click)="openQcm()"><b>✓</b>QCM</span><i></i>
+      <span class="step active"><b>5</b>Rendez-vous</span>
+    </nav>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><span>♧</span><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <section class="content">
+    <div *ngIf="loading" class="state">Chargement de votre dossier...</div>
+    <div *ngIf="!loading && !candidature" class="empty">
+      <h1>Votre dossier est vide</h1>
+      <p>Commencez par déposer une préinscription.</p>
+      <button class="primary" (click)="openPreinscription()">Accéder à la préinscription</button>
+    </div>
+    <ng-container *ngIf="!loading && candidature">
+      <div class="main-column">
+        <div class="intro">
+          <div><span class="breadcrumb">5 · Mon dossier</span><h1>Bonjour {{ userName }}</h1><p>Ta candidature à la {{ candidature.parcours.nom }} ({{ candidature.parcours.etablissement }}) avance bien.</p></div>
+          <strong class="status" *ngIf="isInterviewApproved">Entretien confirmé</strong>
+        </div>
+        <section class="timeline-card">
+          <h2>Avancement de ma candidature</h2>
+          <div class="timeline">
+            <div class="timeline-item done"><span>✓</span><div><strong>Conversation d’orientation</strong><small>Terminée · profil construit</small></div></div>
+            <div class="timeline-item done"><span>✓</span><div><strong>Orientation</strong><small>{{ candidature.parcours.nom }} sélectionné</small></div></div>
+            <div class="timeline-item done"><span>✓</span><div><strong>Préinscription</strong><small>Dossier créé · candidature {{ candidature.statut }}</small></div></div>
+            <div class="timeline-item" [class.done]="isQcmDone"><span>{{ isQcmDone ? '✓' : '4' }}</span><div><strong>QCM ciblé</strong><small>{{ isQcmDone ? 'Terminé · résultat transmis' : 'À compléter' }}<b *ngIf="qcm"> · Score {{ qcm.score }}/100</b></small></div></div>
+            <div class="timeline-item" [class.done]="isInterviewDone"><span>{{ isInterviewDone ? '✓' : '5' }}</span><div><strong>Rendez-vous d’entretien</strong><small>{{ isInterviewDone ? (isInterviewApproved ? 'Confirmé' : 'Planifié') : 'En attente de planification' }}<b *ngIf="entretien"> · {{ entretien.date | date:'d MMMM à HH:mm' }}</b></small></div></div>
+            <div class="timeline-item"><span class="muted">6</span><div><strong>Inscription finale</strong><small>Après l’entretien et la décision</small></div></div>
+          </div>
+        </section>
+        <section class="details-card">
+          <div class="details-heading"><h2>Éléments du dossier</h2><label class="upload-button" [class.disabled]="uploading">{{ uploading ? 'Envoi...' : 'Ajouter un document' }}<input type="file" (change)="uploadDocument($event)" [disabled]="uploading"></label></div>
+          <div *ngFor="let document of documents" class="detail-row"><span>▣</span><div><strong>{{ document.nom }}</strong><small>Document transmis le {{ document.date_ajout | date:'d MMMM yyyy' }}</small></div><button class="download" (click)="downloadDocument(document)">Télécharger</button></div>
+          <div *ngFor="let complement of complements" class="detail-row"><span>!</span><div><strong>Demande de complément · {{ complement.statut }}</strong><small>{{ complement.contenu }}</small></div></div>
+          <p *ngIf="!documents.length && !complements.length" class="empty-details">Aucun document ou complément pour le moment.</p>
+        </section>
+        <div *ngIf="error" class="error">{{ error }}</div>
+      </div>
+
+      <aside class="side-panel">
+        <section class="side-card interview-card" *ngIf="entretien; else noInterview">
+          <h2>◷ &nbsp; Mon entretien</h2>
+          <p>{{ entretien.date | date:'EEEE d MMMM · HH:mm' }}</p>
+          <small>Ton rendez-vous est {{ isInterviewApproved ? 'confirmé' : 'planifié' }}.</small>
+          <button class="primary">Ajouter au calendrier</button>
+          <button class="link">Demander un autre créneau</button>
+        </section>
+        <ng-template #noInterview><section class="side-card"><h2>◷ &nbsp; Mon entretien</h2><p>Le rendez-vous n’est pas encore planifié.</p><small>Tu recevras une notification dès qu’un créneau sera proposé.</small></section></ng-template>
+        <section class="side-card">
+          <h2>Messages envoyés</h2>
+          <div class="message-row">✉ <span><strong>Confirmation de préinscription</strong><small>Reçu après la validation du dossier</small></span></div>
+          <div class="message-row" *ngIf="isQcmDone">✉ <span><strong>Résultat du QCM</strong><small>Score transmis au responsable</small></span></div>
+          <div class="message-row" *ngIf="entretien">✉ <span><strong>Invitation à l’entretien</strong><small>Rendez-vous enregistré</small></span></div>
+        </section>
+        <section class="side-card help-card"><h2>Une question ?</h2><p>Pose-la à ton assistant en tunisien, Arabi ou français.</p><button class="primary" (click)="openConversation()">Reprendre la conversation</button><button class="link" (click)="openConversation()">Parler à un conseiller</button></section>
+      </aside>
+    </ng-container>
+  </section>
+</main>

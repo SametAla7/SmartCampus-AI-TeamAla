@@ -1,0 +1,24 @@
+<main class="admin-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <span class="role-badge">Administrateur</span>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <strong>Administration</strong><small>Plateforme SmartCampus</small>
+      <nav><button class="active">▤ <span>Sources RAG</span></button><button (click)="resetForm()">♙ <span>Comptes et rôles</span></button><button>☷ <span>Journaux</span></button></nav>
+      <div class="profile">{{ userName }}<small>Administrateur</small></div>
+    </aside>
+    <section class="workspace">
+      <div class="heading"><div><h1>Administration de la plateforme</h1><p>Corpus RAG, comptes et configuration du système.</p></div><div class="heading-actions"><button class="secondary" (click)="reindex()" [disabled]="reindexing">{{ reindexing ? 'Réindexation...' : 'Réindexer' }}</button><button class="primary" (click)="resetForm()">Nouvel utilisateur</button></div></div>
+      <div *ngIf="error" class="error">{{ error }}</div><div *ngIf="success" class="success">{{ success }}</div>
+      <div class="grid">
+        <section class="card rag-card"><div class="card-title"><div><h2>Sources du corpus RAG</h2><p>Configuration du système documentaire</p></div><span [class.ok]="rag?.configured">{{ rag?.configured ? 'Configuré' : 'Non configuré' }}</span></div><div class="rag-row"><span>Répertoire corpus</span><strong>{{ rag?.corpus_dir || 'Non défini' }}</strong></div><div class="rag-row"><span>Stock vectoriel</span><strong>{{ rag?.vector_store || 'Non défini' }}</strong></div><div class="rag-row"><span>Fournisseur embeddings</span><strong>{{ rag?.embedding_provider || 'Non défini' }}</strong></div><p class="hint">La réindexation utilise la configuration retournée par le backend. Une erreur explicite est affichée si l’intégration n’est pas disponible.</p></section>
+        <section class="card trace-card"><h2>État de la plateforme</h2><div class="trace-row"><span>Authentification</span><b>JWT actif</b></div><div class="trace-row"><span>Gestion des comptes</span><b>API disponible</b></div><div class="trace-row"><span>RAG</span><b>{{ rag?.configured ? 'Prêt' : 'À configurer' }}</b></div></section>
+      </div>
+      <section class="card users-card"><div class="card-title"><div><h2>Comptes et rôles</h2><p>{{ users.length }} utilisateur(s) enregistré(s)</p></div><input [(ngModel)]="filter" placeholder="Rechercher un compte"></div><div *ngIf="loading" class="state">Chargement des utilisateurs...</div><div class="user-table" *ngIf="!loading"><div class="user-head"><span>Utilisateur</span><span>Email</span><span>Rôle</span><span>Statut</span><span>Action</span></div><div class="user-row" *ngFor="let user of filteredUsers" [class.selected]="selected?.id === user.id"><div><strong>{{ user.nom }}</strong><small>Créé le {{ user.date_creation | date:'d MMM yyyy' }}</small></div><span>{{ user.email }}</span><span>{{ user.role }}</span><b [class.inactive]="!user.est_actif">{{ user.est_actif ? 'Actif' : 'Désactivé' }}</b><div class="row-actions"><button (click)="select(user)">Modifier</button><button (click)="toggleStatus(user)">{{ user.est_actif ? 'Désactiver' : 'Activer' }}</button></div></div></div></section>
+      <section class="card form-card"><h2>{{ selected ? 'Modifier le compte' : 'Créer un compte' }}</h2><div class="form-grid"><label>Nom<input [(ngModel)]="form.nom"></label><label>Email<input type="email" [(ngModel)]="form.email"></label><label>Rôle<select [(ngModel)]="form.role"><option>CANDIDAT</option><option>RESPONSABLE_ACADEMIQUE</option><option>RESPONSABLE_ENTRETIEN</option><option>DIRECTION</option><option>ADMINISTRATEUR</option></select></label><label *ngIf="!selected">Mot de passe<input type="password" [(ngModel)]="form.mot_de_passe" minlength="8"></label></div><small *ngIf="!selected" class="hint">Le mot de passe doit contenir au moins 8 caractères.</small><div class="form-actions"><button class="primary" (click)="saveUser()" [disabled]="saving">{{ saving ? 'Enregistrement...' : 'Enregistrer' }}</button><button class="secondary" (click)="resetForm()">Annuler</button></div></section>
+    </section>
+  </div>
+</main>
