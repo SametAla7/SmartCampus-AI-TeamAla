@@ -31,9 +31,16 @@ export class LoginComponent {
     
     if (this.mode === 'login') {
       this.auth.login(this.email, this.password).subscribe({
-        next: () => {
+        next: (response) => {
           this.loading = false;
-          this.router.navigate(['/dashboard']);
+          const destinationByRole: Record<string, string> = {
+            ADMINISTRATEUR: '/administration',
+            DIRECTION: '/direction',
+            RESPONSABLE_ACADEMIQUE: '/responsable-academique',
+            RESPONSABLE_ENTRETIEN: '/responsable-entretien',
+            CANDIDAT: '/dashboard'
+          };
+          this.router.navigate([destinationByRole[response.user.role] ?? '/dashboard']);
         },
         error: (err) => {
           this.loading = false;
