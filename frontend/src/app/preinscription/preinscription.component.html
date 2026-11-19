@@ -1,0 +1,54 @@
+<main class="preinscription-page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><strong>SmartCampus AI</strong></div>
+    <nav class="steps" aria-label="Progression">
+      <span class="step done" (click)="backToConversation()"><b>✓</b>Discuter</span><i></i>
+      <span class="step done" (click)="backToOrientation()"><b>✓</b>Orientation</span><i></i>
+      <span class="step active"><b>3</b>Préinscription</span><i></i>
+      <span class="step" (click)="openQcm()"><b>4</b>QCM</span><i></i>
+      <span class="step" (click)="openDossier()"><b>5</b>Rendez-vous</span>
+    </nav>
+    <div class="top-actions"><span>FR</span><span>TN</span><button>Auto</button><span>♧</span><button class="avatar" (click)="logout()">{{ initials }}</button></div>
+  </header>
+
+  <section class="content">
+    <div class="form-card">
+      <h1>Ma préinscription</h1>
+      <p class="subtitle">Vérifie les informations pré-remplies par l'assistant, puis complète le reste.</p>
+      <div *ngIf="loading" class="state">Chargement des formations...</div>
+      <form *ngIf="!loading" (ngSubmit)="submit()">
+        <h2>1 · Identité</h2>
+        <div class="grid">
+          <label>Prénom<input [(ngModel)]="firstName" name="firstName" required></label>
+          <label>Nom<input [(ngModel)]="lastName" name="lastName" required></label>
+          <label>Adresse e-mail<input type="email" [(ngModel)]="email" name="email" required></label>
+          <label>Téléphone<input name="phone" placeholder="+216 20 000 000"></label>
+        </div>
+        <h2>2 · Parcours choisi</h2>
+        <label>Formation
+          <select [(ngModel)]="selectedParcoursId" name="parcours" required>
+            <option *ngFor="let item of parcours" [value]="item.id">{{ item.nom }} ({{ item.etablissement }})</option>
+          </select>
+        </label>
+        <h2>3 · Scolarité</h2>
+        <div class="grid">
+          <label>Série du baccalauréat<select name="bac"><option>Mathématiques</option><option>Sciences expérimentales</option><option>Informatique</option><option>Autre</option></select></label>
+          <label>Moyenne générale<input name="average" placeholder="Ex. 14,50"></label>
+        </div>
+        <div class="consent">
+          <strong>Consentement</strong>
+          <label><input type="checkbox" name="dataConsent" required> J’accepte le traitement de mes données<small>Utilisées uniquement pour gérer ma candidature, QCM et rendez-vous.</small></label>
+          <label><input type="checkbox" name="contactConsent" required> J’accepte d’être recontacté par e-mail<small>Confirmations, rappels et invitation à l’entretien.</small></label>
+        </div>
+        <div *ngIf="error" class="error">{{ error }}</div>
+        <div *ngIf="success" class="success">{{ success }} Statut : {{ candidature?.statut }}</div>
+        <div class="actions"><button class="primary" type="submit" [disabled]="submitting || !!candidature">{{ submitting ? 'Validation...' : candidature ? 'Préinscription enregistrée' : 'Valider ma préinscription' }}</button><button class="secondary" type="button" (click)="backToConversation()">Revenir à la conversation</button><button *ngIf="candidature" class="secondary" type="button" (click)="openQcm()">Passer le QCM</button></div>
+      </form>
+    </div>
+
+    <aside class="side-panel">
+      <section class="assistant-card"><h2>✧ Pré-rempli par l’assistant</h2><p>Depuis votre conversation, sans ressaisie.</p><div>✓ Formation<strong>{{ candidature?.parcours?.nom || (parcours.length ? parcours[0].nom : 'À sélectionner') }}</strong></div><div>✓ Série du bac<strong>Mathématiques</strong></div><div>✓ Objectif<strong>Ingénieur logiciel</strong></div><div>✓ Langue de contact<strong>Tunisien / Arabe</strong></div></section>
+      <section class="next-card"><h2>Et ensuite ?</h2><div>▣ <strong>QCM ciblé</strong><p>Quelques questions adaptées à ton parcours et à ton niveau.</p></div><div>▣ <strong>Rendez-vous</strong><p>Un créneau d’entretien te sera proposé par e-mail.</p></div><div>▣ <strong>Suivi</strong><p>Rappels et réponses à tes questions jusqu’à l’inscription.</p></div></section>
+    </aside>
+  </section>
+</main>
