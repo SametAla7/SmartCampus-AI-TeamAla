@@ -62,6 +62,18 @@ def create_refresh_token(user_id: uuid.UUID, role: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
+def create_email_verification_token(user_id: uuid.UUID, email: str) -> str:
+    now = _now()
+    payload = {
+        "sub": str(user_id),
+        "email": email,
+        "type": "email_verification",
+        "iat": int(now.timestamp()),
+        "exp": int((now + datetime.timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS)).timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
 def decode_token(token: str, expected_type: str = "access") -> dict:
     """Decodage et validation d'un JWT (signature, expiration, type)."""
     try:
@@ -79,71 +91,12 @@ def decode_token(token: str, expected_type: str = "access") -> dict:
     return payload
 
 
-def _password_fingerprint(hashed_password: str) -> str:
-    """Empreinte courte du hash courant : un token de reinitialisation devient
-    invalide des que le mot de passe change (usage unique, sans colonne en base)."""
-    return hashlib.sha256(hashed_password.encode("utf-8")).hexdigest()[:16]
-
-
-def create_password_reset_token(user_id: uuid.UUID, hashed_password: str) -> str:
-    now = _now()
-    exp_time = now + datetime.timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
-    payload = {
-        "sub": str(user_id),
-        "type": "password_reset",
-        "pwd": _password_fingerprint(hashed_password),
-        "iat": int(now.timestamp()),
-        "exp": int(exp_time.timestamp()),
-    }
-    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-
-
-def decode_password_reset_token(token: str) -> dict:
-    try:
-        return decode_token(token, expected_type="password_reset")
-    except APIError:
-        raise unauthenticated("RESET_TOKEN_INVALID", "Lien de reinitialisation invalide ou expire.")
-
-
-def reset_token_matches_password(payload: dict, hashed_password: str) -> bool:
-    return payload.get("pwd") == _password_fingerprint(hashed_password)
-
-
-def create_email_verification_token(user_id: uuid.UUID, email: str) -> str:
-    now = _now()
-    exp_time = now + datetime.timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS)
-    payload = {
-        "sub": str(user_id),
-        "type": "email_verification",
-        "email": email.lower(),
-        "iat": int(now.timestamp()),
-        "exp": int(exp_time.timestamp()),
-    }
-    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-
-
 def decode_email_verification_token(token: str) -> dict:
     try:
-        return decode_token(token, expected_type="email_verification")
-    except APIError:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
         raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
 
-
-def create_oauth_state(nonce: str) -> str:
-    now = _now()
-    exp_time = now + datetime.timedelta(minutes=settings.OAUTH_STATE_EXPIRE_MINUTES)
-    payload = {
-        "sub": "oauth",
-        "type": "oauth_state",
-        "nonce": nonce,
-        "iat": int(now.timestamp()),
-        "exp": int(exp_time.timestamp()),
-    }
-    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-
-
-def decode_oauth_state(state: str) -> dict:
-    try:
-        return decode_token(state, expected_type="oauth_state")
-    except APIError:
-        raise unauthenticated("OAUTH_STATE_INVALID", "Parametre state OAuth invalide ou expire.")
+    if payload.get("type") != "email_verification" or not payload.get("sub") or not payload.get("email"):
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
+    return payload

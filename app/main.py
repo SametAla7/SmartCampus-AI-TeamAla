@@ -6,8 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import inspect, text
-from sqlalchemy.orm import Session
+from sqlalchemy import Engine, inspect, text
 
 from app.api import admin, auth, candidatures, conversations, dashboard, documents, entretiens, oauth, parcours, users
 from app.core.config import settings
@@ -37,6 +36,11 @@ async def lifespan(app: FastAPI):
             f"(type={diag.get('type')} host={diag.get('host')} database={diag.get('database')}). "
             "Verifiez DATABASE_URL/DATABASE_URL_DIRECT dans le .env du projet, reseau et SSL."
         )
+    # Migration additive for existing databases before SQLAlchemy creates new indexes.
+    try:
+        _ensure_user_auth_columns()
+    except Exception as exc:
+        raise RuntimeError("Echec de la mise a jour du schema utilisateur.") from exc
     # Création des tables au démarrage si activée (dev). En production, préférer les migrations Alembic.
     try:
         if settings.CREATE_TABLES_ON_STARTUP:
@@ -95,3 +99,23 @@ async def api_error_handler(request, exc: APIError):
 @app.get("/api/health", summary="Salud de l'application")
 def health() -> dict:
     return {"status": "ok"}
+
+
+def _ensure_user_auth_columns(database_engine: Engine = engine) -> None:
+    if not inspect(database_engine).has_table("users"):
+        return
+    columns = {column["name"] for column in inspect(database_engine).get_columns("users")}
+    with database_engine.begin() as connection:
+        if "password_set" not in columns:
+            connection.execute(
+                text("ALTER TABLE users ADD COLUMN password_set BOOLEAN NOT NULL DEFAULT TRUE")
+            )
+        if "email_verified" not in columns:
+            connection.execute(
+                text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT TRUE")
+            )
+        if "google_sub" not in columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN google_sub VARCHAR(255)"))
+        connection.execute(
+            text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub)")
+        )

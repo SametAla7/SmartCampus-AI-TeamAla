@@ -2,11 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
-/** Page de retour OAuth : lit les jetons dans le fragment (#...) puis ouvre le tableau de bord. */
 @Component({
   selector: 'app-oauth-callback',
   standalone: true,
-  template: `<p style="padding:40px;font-family:DM Sans,Arial">Connexion en cours…</p>`
+  template: '<p style="padding:40px;font-family:Arial,sans-serif">Completing Google sign-in...</p>'
 })
 export class OAuthCallbackComponent implements OnInit {
   private auth = inject(AuthService);
@@ -14,18 +13,23 @@ export class OAuthCallbackComponent implements OnInit {
 
   ngOnInit() {
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const access = params.get('access_token');
-    const refresh = params.get('refresh_token');
-    // Retire les jetons de l'URL / de l'historique du navigateur.
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const requiresPasswordSetup = params.get('requires_password_setup') === 'true';
     history.replaceState(null, '', window.location.pathname);
 
-    if (!access || !refresh) {
+    if (!accessToken || !refreshToken) {
       this.router.navigate(['/login'], { queryParams: { error: 'oauth_invalid_request' } });
       return;
     }
-    this.auth.completeOAuth(access, refresh).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: () => {
+
+    this.auth.completeOAuth(accessToken, refreshToken, requiresPasswordSetup).subscribe({
+      next: () => this.router.navigate([requiresPasswordSetup ? '/setup-profile' : '/conversations']),
+      error: err => {
+        if (err?.error?.error?.code === 'PASSWORD_SETUP_REQUIRED') {
+          this.router.navigate(['/setup-profile']);
+          return;
+        }
         this.auth.logout();
         this.router.navigate(['/login'], { queryParams: { error: 'oauth_profile_failed' } });
       }

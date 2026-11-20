@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, switchMap, tap } from 'rxjs';
 
 export interface User {
   id: string;
@@ -28,8 +28,18 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem(this.tokenKey);
-    if (token) {
-      this.me().subscribe({ error: () => this.logout() });
+    const isOAuthSetupRoute = ['/oauth/callback', '/setup-profile'].includes(window.location.pathname);
+    if (token && !isOAuthSetupRoute) {
+      this.me().subscribe({
+        error: err => {
+          if (this.getToken() !== token) {
+            return;
+          }
+          if (err?.error?.error?.code !== 'PASSWORD_SETUP_REQUIRED') {
+            this.logout();
+          }
+        }
+      });
     }
   }
 
@@ -53,6 +63,27 @@ export class AuthService {
 
   resendVerification(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/auth/resend-verification`, { email });
+  }
+
+  oauthProviders(): Observable<{ google: boolean; google_login_url: string }> {
+    return this.http.get<{ google: boolean; google_login_url: string }>(`${this.apiUrl}/auth/oauth/providers`);
+  }
+
+  startGoogleLogin(loginUrl: string): void {
+    window.location.href = loginUrl;
+  }
+
+  completeOAuth(accessToken: string, refreshToken: string, requiresPasswordSetup: boolean): Observable<User | null> {
+    localStorage.setItem(this.tokenKey, accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    this.userSubject.next(null);
+    return requiresPasswordSetup ? of(null) : this.me();
+  }
+
+  setupPassword(mot_de_passe: string): Observable<User> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/setup-password`, { mot_de_passe }).pipe(
+      switchMap(() => this.me())
+    );
   }
 
   me(): Observable<User> {

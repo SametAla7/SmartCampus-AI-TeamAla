@@ -194,5 +194,31 @@ class Settings(BaseSettings):
     # Responsable academique attribue par defaut aux nouvelles candidatures
     DEFAULT_RESPONSABLE_ACADEMIQUE_ID: Optional[str] = None
 
+    FRONTEND_URL: str = "http://localhost:4200"
+
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_USE_STARTTLS: bool = True
+    SMTP_USE_SSL: bool = False
+    SMTP_FROM_EMAIL: Optional[str] = None
+    SMTP_FROM_NAME: str = "SmartCampus AI"
+    SMTP_TIMEOUT_SECONDS: int = 10
+    EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool((self.SMTP_HOST or "").strip() and (self.SMTP_FROM_EMAIL or "").strip())
+
+    # OAuth 2.0 - Google
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8000/api/auth/oauth/google/callback"
+
+    @property
+    def google_oauth_configured(self) -> bool:
+        return bool((self.GOOGLE_CLIENT_ID or "").strip() and (self.GOOGLE_CLIENT_SECRET or "").strip())
+
 
 settings = Settings()

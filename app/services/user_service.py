@@ -19,6 +19,7 @@ def create_user(db: Session, data: UserCreate, email_verified: bool = True) -> U
         nom=data.nom,
         email=data.email,
         mot_de_passe=security.hash_password(data.mot_de_passe),
+        email_verified=email_verified,
         role=data.role,
         est_actif=True,
         email_verified=email_verified,

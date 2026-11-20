@@ -15,7 +15,7 @@ from app.schemas.user import UserRead
 bearer_scheme = HTTPBearer(auto_error=False, scheme_name="Bearer")
 
 
-def get_current_user(
+def _authenticated_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
@@ -27,6 +27,16 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id, User.est_actif.is_(True)).first()
     if user is None:
         raise unauthenticated("USER_NOT_FOUND", "Utilisateur introuvable ou desactive.")
+    return user
+
+
+def get_current_user(user: User = Depends(_authenticated_user)) -> User:
+    if not user.password_set:
+        raise unauthenticated("PASSWORD_SETUP_REQUIRED", "Veuillez terminer la configuration de votre profil.")
+    return user
+
+
+def get_user_for_password_setup(user: User = Depends(_authenticated_user)) -> User:
     return user
 
 

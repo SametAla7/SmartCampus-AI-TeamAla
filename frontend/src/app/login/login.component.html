@@ -17,21 +17,19 @@
       <p class="sub">{{mode==='login'?'Sign in to continue to your campus workspace.':'Join North American Private University.'}}</p>
       <form (ngSubmit)="submit()">
         <div *ngIf="mode==='signup'" class="row">
-          <label>FIRST NAME<input name="firstName" [(ngModel)]="firstName" required></label>
-          <label>LAST NAME<input name="lastName" [(ngModel)]="lastName" required></label>
+          <label>FIRST NAME<input name="firstName" [(ngModel)]="firstName" autocomplete="given-name" required></label>
+          <label>LAST NAME<input name="lastName" [(ngModel)]="lastName" autocomplete="family-name" required></label>
         </div>
-        <label>EMAIL<input type="email" name="email" [(ngModel)]="email" required></label>
-        <label>PASSWORD<input type="password" name="password" [(ngModel)]="password" required minlength="8"></label>
-        <p *ngIf="mode==='login'" style="text-align:right;margin:-6px 0 0">
-          <button type="button" (click)="forgotPassword()" style="border:0;background:none;color:#1760d4;font-weight:700;font-size:13px;cursor:pointer">Forgot password?</button>
-        </p>
+        <label>EMAIL<input type="email" name="email" [(ngModel)]="email" autocomplete="email" required></label>
+        <label>PASSWORD<input type="password" name="password" [(ngModel)]="password" [attr.autocomplete]="mode==='login'?'current-password':'new-password'" required minlength="8"></label>
         <button class="primary" [disabled]="loading">{{loading?'Please wait...':mode==='login'?'Sign in':'Create candidate account'}}</button>
       </form>
       <div class="divider"><span>OR</span></div>
-      <button class="google" type="button" (click)="google()"><span>G</span> Continue with Google</button>
+      <button class="google" type="button" (click)="google()" [disabled]="!googleEnabled"><span>G</span> Continue with Google</button>
+      <p class="notice" *ngIf="!googleEnabled">Google sign-in is currently unavailable.</p>
       <p class="notice" *ngIf="message">{{message}}</p>
       <p class="error" *ngIf="error">{{error}}</p>
-      <button *ngIf="emailVerificationRequired" type="button" (click)="resendVerification()" [disabled]="loading" class="google">
+      <button *ngIf="emailVerificationRequired" type="button" class="google" (click)="resendVerification()" [disabled]="loading">
         Resend verification email
       </button>
       <p class="switch">{{mode==='login'?"Don't have a candidate account?":"Already have an account?"}}
