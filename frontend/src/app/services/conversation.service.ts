@@ -22,7 +22,7 @@ export interface Conversation {
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://127.0.0.1:8000/api/conversations';
+  private apiUrl = '/api/conversations';
 
   create(): Observable<Conversation> {
     return this.http.post<Conversation>(this.apiUrl, {});

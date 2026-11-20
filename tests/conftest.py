@@ -31,6 +31,19 @@ TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commi
 Base.metadata.create_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_external_services(monkeypatch):
+    """Les tests ne doivent jamais envoyer de vrais emails ni appeler Google,
+    meme si le .env du developpeur contient de vrais identifiants."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "SMTP_HOST", None)
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", None)
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_SECRET", None)
+    monkeypatch.setattr(settings, "APP_ENV", "development")
+    monkeypatch.setattr(settings, "FRONTEND_URL", "http://localhost:4200")
+
+
 @pytest.fixture()
 def db_session() -> Iterator:
     session = TestingSessionLocal()

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Enum as SAEnum, ForeignKey, String, Uuid
+from sqlalchemy import Boolean, DateTime, Enum as SAEnum, ForeignKey, String, Uuid, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -39,6 +39,7 @@ class User(Base):
     mot_de_passe: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, name="user_role"), nullable=False)
     est_actif: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true())
     date_creation: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     conversations: Mapped[list["Conversation"]] = relationship(
