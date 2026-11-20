@@ -11,7 +11,7 @@ from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserRead, UserUpdate, UserStatusUpdate
 
 
-def create_user(db: Session, data: UserCreate) -> UserRead:
+def create_user(db: Session, data: UserCreate, email_verified: bool = True) -> UserRead:
     existing = db.query(User).filter(User.email == data.email).first()
     if existing is not None:
         raise conflict("USER_EMAIL_ALREADY_EXISTS", "Un utilisateur existe deja avec cet email.")
@@ -19,6 +19,7 @@ def create_user(db: Session, data: UserCreate) -> UserRead:
         nom=data.nom,
         email=data.email,
         mot_de_passe=security.hash_password(data.mot_de_passe),
+        email_verified=email_verified,
         role=data.role,
         est_actif=True,
     )

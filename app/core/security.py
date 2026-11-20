@@ -61,6 +61,18 @@ def create_refresh_token(user_id: uuid.UUID, role: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
+def create_email_verification_token(user_id: uuid.UUID, email: str) -> str:
+    now = _now()
+    payload = {
+        "sub": str(user_id),
+        "email": email,
+        "type": "email_verification",
+        "iat": int(now.timestamp()),
+        "exp": int((now + datetime.timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS)).timestamp()),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
 def decode_token(token: str, expected_type: str = "access") -> dict:
     """Decodage et validation d'un JWT (signature, expiration, type)."""
     try:
@@ -75,4 +87,15 @@ def decode_token(token: str, expected_type: str = "access") -> dict:
     if not user_id:
         raise unauthenticated("TOKEN_INVALID", "Token invalide.")
 
+    return payload
+
+
+def decode_email_verification_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
+
+    if payload.get("type") != "email_verification" or not payload.get("sub") or not payload.get("email"):
+        raise unauthenticated("EMAIL_VERIFICATION_INVALID", "Lien de verification invalide ou expire.")
     return payload

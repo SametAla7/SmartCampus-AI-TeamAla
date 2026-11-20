@@ -32,7 +32,6 @@ Keep each page's template and styles in its page folder. Put reusable frontend H
 `.github/workflows/ci.yml` runs backend tests and the Angular production build on pushes, pull requests, and manual runs. A push to the default branch also builds and publishes backend and frontend Docker images to GHCR, tagged `latest` and with the commit SHA.
 
 ## Docker deployment
-- `compose.yaml` starts PostgreSQL, the FastAPI API, and the Angular/Nginx frontend. Persistent volumes retain the database and uploaded documents.
-- Local startup: `docker compose up --build -d`; open http://localhost:4200. API health: http://localhost:8000/api/health. Stop with `docker compose down` (data volumes remain); remove persisted data with `docker compose down -v`.
-- Set `JWT_SECRET` and optionally `POSTGRES_PASSWORD` in the root `.env` before deployment. Defaults in Compose are intended only for local development.
+- `compose.yaml` starts the FastAPI API and Angular/Nginx frontend. The backend requires `DATABASE_URL_DIRECT` in the root `.env` and connects to the hosted PostgreSQL database; uploaded documents are stored in a persistent volume.
+- Startup: `docker compose up --build -d`; open http://localhost:4200. API health: http://localhost:8000/api/health. Stop with `docker compose down`; uploaded documents remain in their volume.
 - GitHub Actions runs CI on pushes and pull requests. A push to the repository's default branch builds and publishes `ghcr.io/<owner>/<repo>-backend` and `ghcr.io/<owner>/<repo>-frontend` with branch and commit SHA tags; `latest` is reserved for the default branch. To deploy on a Docker host, authenticate to GHCR, set `BACKEND_IMAGE` and `FRONTEND_IMAGE` to those image names in the host environment, then run `docker compose pull && docker compose up -d`.

@@ -31,6 +31,15 @@ TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commi
 Base.metadata.create_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def isolate_external_services(monkeypatch) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "SMTP_HOST", None)
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", None)
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_SECRET", None)
+
+
 @pytest.fixture()
 def db_session() -> Iterator:
     session = TestingSessionLocal()
