@@ -42,7 +42,6 @@ class User(Base):
     google_sub: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, name="user_role"), nullable=False)
     est_actif: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true())
     date_creation: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     conversations: Mapped[list["Conversation"]] = relationship(

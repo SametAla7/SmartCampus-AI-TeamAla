@@ -24,43 +24,6 @@ export class LoginComponent implements OnInit {
   loading = false;
   message = '';
   error = '';
-  emailVerificationRequired = false;
-  googleEnabled = false;
-  googleLoginUrl = '';
-
-  ngOnInit() {
-    const verificationToken = this.route.snapshot.queryParamMap.get('verify_token');
-    if (verificationToken) {
-      this.loading = true;
-      this.auth.verifyEmail(verificationToken).subscribe({
-        next: result => {
-          this.loading = false;
-          this.message = result.message;
-          this.router.navigate(['/login'], { replaceUrl: true });
-        },
-        error: err => {
-          this.loading = false;
-          this.error = err?.error?.detail || 'Could not verify this email address.';
-          this.router.navigate(['/login'], { replaceUrl: true });
-        }
-      });
-    }
-
-    const error = this.route.snapshot.queryParamMap.get('error');
-    if (error && !verificationToken) {
-      this.error = error === 'oauth_denied'
-        ? 'Google sign-in was cancelled.'
-        : 'Google sign-in failed. Please try again.';
-    }
-
-    this.auth.oauthProviders().subscribe({
-      next: providers => {
-        this.googleEnabled = providers.google;
-        this.googleLoginUrl = providers.google_login_url;
-      },
-      error: () => (this.googleEnabled = false)
-    });
-  }
 
   submit() {
     this.loading = true;
@@ -76,25 +39,23 @@ export class LoginComponent implements OnInit {
         },
         error: err => {
           this.loading = false;
-          this.emailVerificationRequired = err?.error?.error?.code === 'EMAIL_NOT_VERIFIED';
-          this.error = err?.error?.detail || 'Invalid email or password.';
+          this.error = err.error?.detail || 'Identifiants invalides';
         }
       });
-      return;
+    } else {
+      const nom = `${this.firstName} ${this.lastName}`.trim();
+      this.auth.register(nom, this.email, this.password).subscribe({
+        next: () => {
+          this.loading = false;
+          this.message = 'Compte cr�� avec succ�s. Vous pouvez vous connecter.';
+          this.mode = 'login';
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err.error?.detail || 'Erreur lors de la cr�ation du compte';
+        }
+      });
     }
-
-    const nom = `${this.firstName} ${this.lastName}`.trim();
-    this.auth.register(nom, this.email, this.password).subscribe({
-      next: () => {
-        this.loading = false;
-        this.message = 'Account created. Check your email for a verification link before signing in.';
-        this.mode = 'login';
-      },
-      error: err => {
-        this.loading = false;
-        this.error = err?.error?.detail || 'Could not create your account.';
-      }
-    });
   }
 
   private formatError(err: any, fallback: string): string {
@@ -114,5 +75,49 @@ export class LoginComponent implements OnInit {
     return err?.status === 0 ? 'Serveur injoignable (backend arretee ?).' : fallback;
   }
 
-  
+  googleEnabled = false;
+
+  private static readonly OAUTH_ERRORS: Record<string, string> = {
+    oauth_denied: 'Connexion Google annulee.',
+    oauth_state_invalid: 'Session de connexion expiree, veuillez reessayer.',
+    oauth_invalid_request: 'Reponse Google invalide, veuillez reessayer.',
+    oauth_email_not_verified: "L'email de votre compte Google n'est pas verifie.",
+    oauth_code_exchange_failed: "Echec de l'authentification Google.",
+    oauth_profile_failed: 'Impossible de charger votre profil.',
+    oauth_provider_unreachable: 'Google est injoignable pour le moment.',
+    user_inactive: 'Ce compte est desactive.'
+  };
+
+  ngOnInit() {
+    const verificationToken = this.route.snapshot.queryParamMap.get('verify_token');
+    if (verificationToken) {
+      this.loading = true;
+      this.auth.verifyEmail(verificationToken).subscribe({
+        next: result => {
+          this.loading = false;
+          this.message = result.message;
+          this.router.navigate(['/login'], { replaceUrl: true });
+        },
+        error: err => {
+          this.loading = false;
+          this.error = this.formatError(err, 'Impossible de confirmer cette adresse email.');
+          this.router.navigate(['/login'], { replaceUrl: true });
+        }
+      });
+    }
+
+    const code = this.route.snapshot.queryParamMap.get('error');
+    if (code && !verificationToken) {
+      this.error = LoginComponent.OAUTH_ERRORS[code] || 'Echec de la connexion.';
+    }
+
+    this.auth.oauthProviders().subscribe({
+      next: p => (this.googleEnabled = p.google),
+      error: () => (this.googleEnabled = false)
+    });
+  }
+
+  google() {
+    this.message = 'Google sign-in sera disponible prochainement.';
+  }
 }

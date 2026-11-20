@@ -22,7 +22,6 @@ def create_user(db: Session, data: UserCreate, email_verified: bool = True) -> U
         email_verified=email_verified,
         role=data.role,
         est_actif=True,
-        email_verified=email_verified,
     )
     try:
         db.add(user)

@@ -100,22 +100,6 @@ export class AuthService {
     return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, { token, nouveau_mot_de_passe });
   }
 
-  oauthProviders(): Observable<{ google: boolean }> {
-    return this.http.get<{ google: boolean }>(`${this.apiUrl}/auth/oauth/providers`);
-  }
-
-  /** Navigation pleine page (pas XHR) : le backend redirige vers Google puis revient sur /oauth/callback. */
-  startGoogleLogin() {
-    window.location.href = `${this.apiUrl}/auth/oauth/google/login`;
-  }
-
-  /** Enregistre les jetons recus apres OAuth puis charge l'utilisateur courant. */
-  completeOAuth(accessToken: string, refreshToken: string): Observable<User> {
-    localStorage.setItem(this.tokenKey, accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    return this.me();
-  }
-
   logout() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem('refresh_token');

@@ -8,8 +8,7 @@ import { authInterceptor } from './app/services/auth.interceptor';
 
 const routes: Routes = [
   { path: 'login', loadComponent: () => import('./app/login/login.component').then(m => m.LoginComponent) },
-  { path: 'oauth/callback', loadComponent: () => import('./app/oauth-callback.component').then(m => m.OAuthCallbackComponent) },
-  { path: 'setup-profile', loadComponent: () => import('./app/setup-profile.component').then(m => m.SetupProfileComponent) },
+  { path: 'dashboard', loadComponent: () => import('./app/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'conversations', loadComponent: () => import('./app/conversations/conversations.component').then(m => m.ConversationsComponent) },
   { path: 'orientation', loadComponent: () => import('./app/orientation/orientation.component').then(m => m.OrientationComponent) },
   { path: 'preinscription', loadComponent: () => import('./app/preinscription/preinscription.component').then(m => m.PreinscriptionComponent) },
