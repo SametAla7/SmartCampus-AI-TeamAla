@@ -24,6 +24,9 @@ export class LoginComponent implements OnInit {
   loading = false;
   message = '';
   error = '';
+  emailVerificationRequired = false;
+  googleLoginUrl = '';
+  googleEnabled = false;
 
   submit() {
     this.loading = true;
@@ -39,7 +42,8 @@ export class LoginComponent implements OnInit {
         },
         error: err => {
           this.loading = false;
-          this.error = err.error?.detail || 'Identifiants invalides';
+          this.emailVerificationRequired = err?.error?.error?.code === 'EMAIL_NOT_VERIFIED';
+          this.error = this.formatError(err, 'Identifiants invalides');
         }
       });
     } else {
@@ -47,12 +51,12 @@ export class LoginComponent implements OnInit {
       this.auth.register(nom, this.email, this.password).subscribe({
         next: () => {
           this.loading = false;
-          this.message = 'Compte cr�� avec succ�s. Vous pouvez vous connecter.';
+          this.message = 'Compte cree. Verifiez votre email pour confirmer votre adresse avant de vous connecter.';
           this.mode = 'login';
         },
-        error: (err) => {
+        error: err => {
           this.loading = false;
-          this.error = err.error?.detail || 'Erreur lors de la cr�ation du compte';
+          this.error = this.formatError(err, 'Erreur lors de la creation du compte');
         }
       });
     }
@@ -75,8 +79,6 @@ export class LoginComponent implements OnInit {
     return err?.status === 0 ? 'Serveur injoignable (backend arretee ?).' : fallback;
   }
 
-  googleEnabled = false;
-
   private static readonly OAUTH_ERRORS: Record<string, string> = {
     oauth_denied: 'Connexion Google annulee.',
     oauth_state_invalid: 'Session de connexion expiree, veuillez reessayer.',
@@ -87,6 +89,28 @@ export class LoginComponent implements OnInit {
     oauth_provider_unreachable: 'Google est injoignable pour le moment.',
     user_inactive: 'Ce compte est desactive.'
   };
+
+  google() {
+    if (this.googleEnabled && this.googleLoginUrl) {
+      this.auth.startGoogleLogin(this.googleLoginUrl);
+    }
+  }
+
+  resendVerification() {
+    this.loading = true;
+    this.message = '';
+    this.error = '';
+    this.auth.resendVerification(this.email).subscribe({
+      next: result => {
+        this.loading = false;
+        this.message = result.message;
+      },
+      error: err => {
+        this.loading = false;
+        this.error = this.formatError(err, 'Impossible de renvoyer le lien de verification.');
+      }
+    });
+  }
 
   ngOnInit() {
     const verificationToken = this.route.snapshot.queryParamMap.get('verify_token');
@@ -112,12 +136,11 @@ export class LoginComponent implements OnInit {
     }
 
     this.auth.oauthProviders().subscribe({
-      next: p => (this.googleEnabled = p.google),
+      next: p => {
+        this.googleEnabled = p.google;
+        this.googleLoginUrl = p.google_login_url;
+      },
       error: () => (this.googleEnabled = false)
     });
-  }
-
-  google() {
-    this.message = 'Google sign-in sera disponible prochainement.';
   }
 }
