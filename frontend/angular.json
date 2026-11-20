@@ -1,1 +1,37 @@
-{"$schema":"https://json.schemastore.org/angular.json","version":1,"projects":{"smartcampus":{"projectType":"application","root":"","sourceRoot":"src","architect":{"build":{"builder":"@angular-devkit/build-angular:application","options":{"browser":"src/main.ts","tsConfig":"tsconfig.json","index":"src/index.html","assets":["src/assets"],"styles":["src/styles.css"],"outputPath":"dist/smartcampus"}},"serve":{"builder":"@angular-devkit/build-angular:dev-server","options":{"buildTarget":"smartcampus:build"}}}}}}
+{
+  "$schema": "https://json.schemastore.org/angular.json",
+  "version": 1,
+  "projects": {
+    "smartcampus": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.json",
+            "index": "src/index.html",
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "outputPath": "dist/smartcampus"
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "smartcampus:build"
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "b3cc6dbe-58e3-4495-9f27-1a696aff0909"
+  }
+}
