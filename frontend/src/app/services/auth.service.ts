@@ -100,6 +100,17 @@ export class AuthService {
     return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, { token, nouveau_mot_de_passe });
   }
 
+  // Page d'accueil selon le rôle de l'utilisateur
+  homeRoute(role?: string | null): string {
+    switch (role) {
+      case 'ADMINISTRATEUR': return '/administration';
+      case 'DIRECTION': return '/direction';
+      case 'RESPONSABLE_ACADEMIQUE': return '/responsable-academique';
+      case 'RESPONSABLE_ENTRETIEN': return '/responsable-entretien';
+      default: return '/conversations';
+    }
+  }
+
   logout() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem('refresh_token');

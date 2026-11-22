@@ -38,7 +38,7 @@ export class LoginComponent implements OnInit {
       this.auth.login(this.email, this.password).subscribe({
         next: () => {
           this.loading = false;
-          this.router.navigate(['/conversations']);
+          this.router.navigate([this.auth.homeRoute(this.auth.getUser()?.role)]);
         },
         error: err => {
           this.loading = false;
