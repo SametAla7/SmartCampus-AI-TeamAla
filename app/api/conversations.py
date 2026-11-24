@@ -51,8 +51,13 @@ def send_message_endpoint(
     conversation = get_conversation_for_user(db, conversation_id, user)
     if not chatbot_service.is_chatbot_configured():
         raise service_unavailable("CHATBOT_NOT_CONFIGURED", "Le chatbot n'est pas configure pour le moment.")
+    history = list_messages(db, conversation.id)
     sent_message = create_message(db, conversation, user.id, message_create.contenu)
-    reply = chatbot_service.generate_reply(conversation, message_create.contenu)
+    reply = chatbot_service.generate_reply(
+        conversation,
+        message_create.contenu,
+        history=history,
+    )
     if reply:
         create_message(db, conversation, None, reply, est_assistant=True)
     return MessageRead.model_validate(sent_message)

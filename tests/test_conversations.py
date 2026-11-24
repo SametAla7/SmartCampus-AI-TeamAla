@@ -1,9 +1,12 @@
 """Tests - Conversations et chatbot."""
 
+from uuid import UUID
+
 from fastapi.testclient import TestClient
 
 from app.models.conversation import Conversation
 from app.models.user import UserRole
+from app.services.conversation_service import create_message
 from tests.conftest import create_user, login_payload
 
 
@@ -56,10 +59,20 @@ def test_send_message_without_chatbot_returns_503(client: TestClient, db_session
 
 def test_send_message_with_configured_chatbot(client: TestClient, db_session, monkeypatch) -> None:
     monkeypatch.setattr("app.services.chatbot_service.is_chatbot_configured", lambda: True)
-    monkeypatch.setattr("app.services.chatbot_service.generate_reply", lambda conversation, contenu: "reponse du chatbot")
+    captured = {}
 
-    token_response, _ = create_candidate_token(client, db_session)
+    def generate_reply(conversation, contenu, history=None):
+        captured["history"] = history
+        return "reponse du chatbot"
+
+    monkeypatch.setattr("app.services.chatbot_service.generate_reply", generate_reply)
+
+    token_response, user = create_candidate_token(client, db_session)
     conversation = create_conversation(client, token_response["access_token"])
+    db_conversation = db_session.query(Conversation).filter_by(id=UUID(conversation["id"])).one()
+    create_message(db_session, db_conversation, user.id, "Old user message")
+    create_message(db_session, db_conversation, None, "Old assistant reply", est_assistant=True)
+
     response = client.post(
         f"/api/conversations/{conversation['id']}/messages",
         json={"contenu": "Bonjour"},
@@ -70,7 +83,11 @@ def test_send_message_with_configured_chatbot(client: TestClient, db_session, mo
     messages_response = client.get(f"/api/conversations/{conversation['id']}/messages", headers=auth(token_response["access_token"]))
     assert messages_response.status_code == 200
     messages = messages_response.json()
-    assert len(messages) == 2
-    assert messages[0]["contenu"] == "Bonjour"
-    assert messages[1]["contenu"] == "reponse du chatbot"
-    assert messages[1]["est_assistant"] is True
+    assert len(messages) == 4
+    assert messages[-2]["contenu"] == "Bonjour"
+    assert messages[-1]["contenu"] == "reponse du chatbot"
+    assert messages[-1]["est_assistant"] is True
+    assert [(message.contenu, message.est_assistant) for message in captured["history"]] == [
+        ("Old user message", False),
+        ("Old assistant reply", True),
+    ]

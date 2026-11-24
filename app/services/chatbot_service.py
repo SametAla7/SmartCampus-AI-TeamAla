@@ -1,26 +1,31 @@
-"""Service - Chatbot (integration LLM / RAG preparee, non operationnelle par defaut)."""
+"""Application-level conversation adapter for the Colab inference client."""
 
 from app.core.config import settings
 from app.core.errors import service_unavailable
-from app.db.session import Session
-from app.models.conversation import Conversation
-
-
-class ChatbotNotConfiguredError(Exception):
-    """Le chatbot n'est pas encore configure (provider LLM / RAG indisponible)."""
+from app.models.conversation import Conversation, Message
+from app.services.colab_inference_client import generate_answer
 
 
 def is_chatbot_configured() -> bool:
-    return bool(settings.CHATBOT_ENABLED and settings.CHATBOT_PROVIDER and settings.CHATBOT_API_KEY)
+    return bool(settings.CHATBOT_ENABLED and (settings.COLAB_INFERENCE_URL or "").strip())
 
 
-def generate_reply(conversation: Conversation, contenu: str) -> str:
-    """Genere une reponse du chatbot.
-
-    Ne simule JAMAIS une reponse : si aucun provider LLM ni systeme RAG n'est
-    configure, une erreur explicite est renvoyee au client.
-    """
+def generate_reply(
+    conversation: Conversation,
+    contenu: str,
+    history: list[Message] | None = None,
+    language: str | None = None,
+) -> str:
+    """Forward a message and recent conversation turns to the configured model."""
     if not is_chatbot_configured():
-        raise service_unavailable("CHATBOT_NOT_CONFIGURED", "Le chatbot n'est pas configure pour le moment.")
-    # Integration LLM / RAG a prevoir : retrieval documentaire + generation.
-    return "reponse du chatbot"
+        raise service_unavailable("CHATBOT_NOT_CONFIGURED", "Le chatbot Colab n'est pas configure.")
+    history_limit = max(settings.COLAB_INFERENCE_HISTORY_LIMIT, 0)
+    recent_history = (history or [])[-history_limit:] if history_limit else []
+    history_payload = [
+        {
+            "role": "assistant" if message.est_assistant else "user",
+            "content": message.contenu,
+        }
+        for message in recent_history
+    ]
+    return generate_answer(contenu, history_payload, language)

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -22,6 +22,8 @@ interface Parcours {
   styleUrls: ['./conversations.component.css']
 })
 export class ConversationsComponent implements OnInit {
+  @ViewChild('messagesList') private messagesList?: ElementRef<HTMLDivElement>;
+
   private conversations = inject(ConversationService);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -33,6 +35,7 @@ export class ConversationsComponent implements OnInit {
   draft = '';
   loading = true;
   sending = false;
+  pendingMessage: string | null = null;
   error = '';
 
   get initials(): string {
@@ -66,12 +69,21 @@ export class ConversationsComponent implements OnInit {
     const content = this.draft.trim();
     this.draft = '';
     this.sending = true;
+    this.pendingMessage = content;
     this.error = '';
-    this.conversations.sendMessage(this.conversation.id, content).subscribe({
-      next: () => this.loadMessages(this.conversation!.id),
+    this.scrollMessagesToBottom();
+    const conversationId = this.conversation.id;
+    this.conversations.sendMessage(conversationId, content).subscribe({
+      next: sentMessage => {
+        this.messages = [...this.messages, sentMessage];
+        this.pendingMessage = null;
+        this.scrollMessagesToBottom();
+        this.loadMessages(conversationId);
+      },
       error: err => {
         this.draft = content;
         this.sending = false;
+        this.pendingMessage = null;
         this.showError(err, 'Le message n’a pas pu être envoyé.');
       }
     });
@@ -108,9 +120,11 @@ export class ConversationsComponent implements OnInit {
     this.conversations.get(id).subscribe({
       next: conversation => {
         this.setConversation(conversation);
+        this.pendingMessage = null;
         this.sending = false;
       },
       error: err => {
+        this.pendingMessage = null;
         this.sending = false;
         this.showError(err, 'Impossible de rafraîchir les messages.');
       }
@@ -121,6 +135,16 @@ export class ConversationsComponent implements OnInit {
     this.conversation = conversation;
     this.messages = conversation.messages ?? [];
     sessionStorage.setItem('conversation_id', conversation.id);
+    this.scrollMessagesToBottom();
+  }
+
+  private scrollMessagesToBottom(): void {
+    requestAnimationFrame(() => {
+      const element = this.messagesList?.nativeElement;
+      if (element) {
+        element.scrollTop = element.scrollHeight;
+      }
+    });
   }
 
   private showError(err: { error?: { detail?: string } }, fallback: string): void {

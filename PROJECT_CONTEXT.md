@@ -21,6 +21,8 @@ Frontend pages include login/signup, dashboard, conversations, orientation, pre-
 
 Backend routers cover authentication, users, study paths (`parcours`), conversations, applications (`candidatures`), interviews, documents, dashboard, and administration. Database and application options are defined in `app/core/config.py` and can be overridden with environment variables and the root `.env` file. Do not commit secrets from `.env`.
 
+The chatbot conversation route keeps its existing authenticated `/api/conversations/{id}/messages` contract and forwards messages plus recent history to the independent Colab inference service. Configure `CHATBOT_ENABLED=true`, `COLAB_INFERENCE_URL` (the current HTTPS tunnel base URL), and optionally `COLAB_INFERENCE_API_KEY` in the backend `.env`. The backend sends the optional key as `X-API-Key`; never expose it to the frontend. `COLAB_INFERENCE_CHAT_ENDPOINT`, `COLAB_INFERENCE_TIMEOUT_SECONDS`, and `COLAB_INFERENCE_HISTORY_LIMIT` are configurable. Keep the Colab runtime and ngrok tunnel running; update the URL in `.env` when the tunnel changes, then recreate the backend container.
+
 ## Local development
 - Frontend: `cd frontend`, `npm install`, then `npm start` (Angular dev server, normally http://localhost:4200); `npm run build` creates a production build.
 - Backend: install dependencies from the repository's Python dependency manifest, configure the root `.env` using `.env.example`, then run `uvicorn app.main:app --reload` from the repository root. The API docs are available at `/docs` and the health endpoint at `/api/health`.

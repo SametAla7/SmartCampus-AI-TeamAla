@@ -21,6 +21,19 @@
 .bubble.assistant { background:#f1f8fd; border:1px solid #d5eaf7; }
 .bubble.user { margin-left:auto; background:linear-gradient(90deg,#2869ee,#1742b5); color:#fff; }
 .bubble.user small { color:#d5efff; }
+.thinking { display:flex; align-items:center; gap:9px; color:#315777; }
+.thinking-dots { display:inline-flex; align-items:center; gap:4px; height:12px; }
+.thinking-dots i { width:5px; height:5px; border-radius:50%; background:#2869ee; animation:thinking-pulse 1.2s ease-in-out infinite; }
+.thinking-dots i:nth-child(2) { animation-delay:.15s; }
+.thinking-dots i:nth-child(3) { animation-delay:.3s; }
+.thinking small { color:#6c8aa4; }
+@keyframes thinking-pulse {
+  0%,80%,100% { opacity:.35; transform:translateY(0); }
+  40% { opacity:1; transform:translateY(-3px); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .thinking-dots i { animation:none; opacity:1; }
+}
 .welcome { max-width:245px; }
 .suggestions .bubble { max-width:340px; }
 .path-grid { display:flex; gap:9px; flex-wrap:wrap; margin-top:12px; }

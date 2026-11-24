@@ -156,6 +156,11 @@ class Settings(BaseSettings):
     CHATBOT_ENABLED: bool = False
     CHATBOT_PROVIDER: Optional[str] = None
     CHATBOT_API_KEY: Optional[str] = None
+    COLAB_INFERENCE_URL: Optional[str] = None
+    COLAB_INFERENCE_CHAT_ENDPOINT: str = "/chat"
+    COLAB_INFERENCE_API_KEY: Optional[str] = None
+    COLAB_INFERENCE_TIMEOUT_SECONDS: int = 180
+    COLAB_INFERENCE_HISTORY_LIMIT: int = 20
     RAG_CORPUS_DIR: Optional[str] = None
     RAG_VECTOR_STORE: Optional[str] = None
     RAG_EMBEDDING_PROVIDER: Optional[str] = None

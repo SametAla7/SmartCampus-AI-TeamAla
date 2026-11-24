@@ -15,14 +15,21 @@
     <section class="chat-area">
       <div class="date-label">Aujourd'hui · conversation en tunisien / عربي</div>
       <div *ngIf="loading" class="loading">Chargement de votre conversation...</div>
-      <div class="messages" *ngIf="!loading">
+      <div class="messages" *ngIf="!loading" #messagesList>
         <div class="bubble assistant welcome">Marhba ! Je suis SmartCampus AI. Tu peux me parler en français, en tunisien ou en Arabi, à l'écrit ou à la voix.<br><strong>Qu'est-ce qui t'intéresse ?</strong><small>SmartCampus AI · agent conversation</small></div>
         <ng-container *ngFor="let message of messages">
           <div class="bubble" [class.assistant]="message.est_assistant" [class.user]="!message.est_assistant">
             {{ message.contenu }}<small>{{ message.est_assistant ? 'SmartCampus AI · agent conversation' : 'Vous' }}</small>
           </div>
         </ng-container>
-        <div class="suggestions" *ngIf="!messages.length">
+        <div class="bubble user pending-message" *ngIf="pendingMessage">
+          {{ pendingMessage }}<small>Vous</small>
+        </div>
+        <div class="bubble assistant thinking" *ngIf="sending" role="status" aria-live="polite">
+          <span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Je réfléchis à votre question…<small>Message reçu · réponse en cours de génération</small></span>
+        </div>
+        <div class="suggestions" *ngIf="!messages.length && !sending">
           <div class="bubble assistant">Pour mieux vous orienter, dites-moi votre niveau d'études et le domaine qui vous intéresse.<small>Profil mis à jour · question adaptative</small></div>
           <div class="bubble user">Je cherche un parcours en informatique après le bac.<small>Transcription · tunisien détecté</small></div>
         </div>
