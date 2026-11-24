@@ -8,7 +8,7 @@
 ## 2. Frontend (réellement développé)
 - **Techno** : Angular 19 (standalone), TypeScript, HttpClient + intercepteur auth, routing.
 - **Interfaces/pages** : page login/inscription (`LoginComponent`, mode login/signup) et `DashboardComponent` (accueil après connexion, déconnexion) ; redirections `/login` et `/dashboard`.
-- **Communication** : appels API FastAPI (config dev `http://127.0.0.1:8001/api`) pour auth/inscription et session utilisateur.
+- **Communication** : appels API FastAPI (config dev `http://127.0.0.1:8000/api`) pour auth/inscription et session utilisateur.
 
 ## 3. Base de données et hébergement
 - **SGBD** : PostgreSQL hébergé sur **Prisma Postgres** (distant), accès via SQLAlchemy + driver `psycopg` v3 ; config `.env`/variables d’environnement, garde anti SQLite/local en exécution normale.

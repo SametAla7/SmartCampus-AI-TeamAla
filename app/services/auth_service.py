@@ -37,6 +37,16 @@ def login(db: Session, login: LoginRequest) -> TokenResponse:
     )
 
 
+def build_token_response(user: User) -> TokenResponse:
+    return TokenResponse(
+        access_token=security.create_access_token(user.id, user.role.value),
+        refresh_token=security.create_refresh_token(user.id, user.role.value),
+        token_type="bearer",
+        user=UserRead.model_validate(user),
+        requires_password_setup=not user.password_set,
+    )
+
+
 def refresh(db: Session, refresh_token: str) -> TokenResponse:
     payload = security.decode_token(refresh_token, expected_type="refresh")
     user_id = uuid.UUID(payload["sub"])

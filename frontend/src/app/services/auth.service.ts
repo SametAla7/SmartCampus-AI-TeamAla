@@ -20,8 +20,8 @@ export interface TokenResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/h�te.
-  private apiUrl = '/api';
+  // Backend FastAPI (dev). Ajuster si le backend tourne sur un autre port/hôte.
+  private apiUrl = 'http://127.0.0.1:8000/api';
   private tokenKey = 'access_token';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
@@ -90,6 +90,25 @@ export class AuthService {
     return this.http.get<User>(`${this.apiUrl}/auth/me`).pipe(
       tap(user => this.userSubject.next(user))
     );
+  }
+
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, nouveau_mot_de_passe: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, { token, nouveau_mot_de_passe });
+  }
+
+  // Page d'accueil selon le rôle de l'utilisateur
+  homeRoute(role?: string | null): string {
+    switch (role) {
+      case 'ADMINISTRATEUR': return '/administration';
+      case 'DIRECTION': return '/direction';
+      case 'RESPONSABLE_ACADEMIQUE': return '/responsable-academique';
+      case 'RESPONSABLE_ENTRETIEN': return '/responsable-entretien';
+      default: return '/conversations';
+    }
   }
 
   logout() {

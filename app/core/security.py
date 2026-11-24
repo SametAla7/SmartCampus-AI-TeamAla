@@ -1,6 +1,7 @@
 """Securite : hachage des mots de passe (Argon2) et JWT (access / refresh)."""
 
 import datetime
+import hashlib
 import uuid
 
 from argon2 import PasswordHasher

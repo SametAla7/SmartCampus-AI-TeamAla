@@ -42,14 +42,22 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         raise RuntimeError("Echec de la mise a jour du schema utilisateur.") from exc
     # Création des tables au démarrage si activée (dev). En production, préférer les migrations Alembic.
-    if settings.CREATE_TABLES_ON_STARTUP:
-        try:
+    try:
+        if settings.CREATE_TABLES_ON_STARTUP:
             Base.metadata.create_all(bind=engine)
-        except Exception as exc:
-            raise RuntimeError(
-                "Echec de l'initialisation du schema au demarrage. "
-                "Verifiez les droits/schema (sans exposer d'identifiants)."
-            ) from exc
+        if inspect(engine).has_table("users"):
+            columns = {column["name"] for column in inspect(engine).get_columns("users")}
+            if "email_verified" not in columns:
+                # Existing accounts predate verification and remain usable; new public signups opt out.
+                with engine.begin() as connection:
+                    connection.execute(
+                        text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT TRUE")
+                    )
+    except Exception as exc:
+        raise RuntimeError(
+            "Echec de l'initialisation du schema au demarrage. "
+            "Verifiez les droits/schema (sans exposer d'identifiants)."
+        ) from exc
     yield
     engine.dispose()
 
